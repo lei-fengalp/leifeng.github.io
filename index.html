@@ -1,0 +1,2702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蕾伊的院子 - 桌面系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { font-family: 'Microsoft YaHei', sans-serif; overflow: hidden; }
+
+        /* 登录界面 */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle, #fff8e1 0%, #ffcc80 100%);
+            transition: opacity 0.8s ease; z-index: 100;
+        }
+        .login-title { font-size: 28px; color: #5d4037; margin-bottom: 30px; letter-spacing: 3px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .name-input {
+            padding: 14px 24px; font-size: 22px; font-weight: bold; text-align: center;
+            border: none; border-radius: 10px; background: rgba(255,255,255,0.7);
+            color: #e65100; outline: none;
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.8); box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+        }
+        .enter-btn {
+            margin-top: 35px; padding: 14px 50px; font-size: 20px; font-weight: bold;
+            color: #fff; background-color: #ff9800; border: 3px solid #f57c00;
+            border-radius: 35px; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 6px 15px rgba(255, 152, 0, 0.5);
+        }
+        .enter-btn:hover { background-color: #f57c00; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255, 152, 0, 0.6); }
+
+        /* 桌面 */
+        #desktop-screen { height: 100vh; display: none; flex-direction: column; background: linear-gradient(to bottom right, #ffe0b2, #ffcc80); }
+        .desktop-area { flex: 1; padding: 25px; display: flex; flex-direction: column; gap: 25px; }
+        .icon { width: 85px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.25s; }
+        .icon:hover { transform: scale(1.08); }
+        .icon-img {
+            width: 55px; height: 55px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+        }
+        .icon-browser { background: linear-gradient(135deg, #4285f4, #1a73e8); }
+        .icon-wechat { background: linear-gradient(135deg, #34b75a, #268a44); }
+        .icon-recycle { background: linear-gradient(135deg, #9aa0a6, #5f6368); }
+        .icon-game { background: linear-gradient(135deg, #f9a825, #ff8f00); }
+        .icon-notebook { background: linear-gradient(135deg, #ce93d8, #8e24aa); }
+        .icon-text { margin-top: 6px; font-size: 12px; color: #5d4037; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
+        .taskbar { height: 42px; background: rgba(255, 224, 178, 0.92); border-top: 1px solid #ffcc80; display: flex; align-items: center; padding-left: 12px; }
+        .start-btn { padding: 6px 18px; background: #ff9800; border: 2px solid #f57c00; border-radius: 18px; color: #fff; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+        /* 通用窗口 */
+        .window { position: absolute; display: none; flex-direction: column; overflow: hidden; z-index: 10; background: #fff; border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .title-bar { height: 32px; background: #ffcc80; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; cursor: move; }
+        .title-bar span { font-size: 13px; color: #5d4037; font-weight: bold; }
+        .close-btn { width: 16px; height: 16px; background: #ff5252; border-radius: 50%; cursor: pointer; }
+        .window-content { flex: 1; padding: 20px; font-size: 14px; color: #333; line-height: 1.6; overflow-y: auto; background: #fffaf0; }
+
+        /* 浏览器 */
+        #browser-win { top: 55px; left: 50%; transform: translateX(-50%); width: 820px; height: 620px; }
+        .zhao-search { display: flex; justify-content: center; margin-bottom: 22px; }
+        .zhao-search input { width: 420px; padding: 11px; border: 2px solid #ffcc80; border-radius: 22px; outline: none; font-size: 15px; }
+        .zhao-search button { padding: 11px 22px; margin-left: 10px; background: #ff9800; border: none; border-radius: 22px; color: #fff; cursor: pointer; font-size: 14px; }
+        .news-list { list-style: none; }
+        .news-item { padding: 11px 0; border-bottom: 1px dashed #ffcc80; cursor: pointer; transition: background 0.2s; }
+        .news-item:hover { background: #ffe0b2; padding-left: 12px; }
+        .news-item a { color: #e65100; text-decoration: none; }
+        .news-item a:hover { text-decoration: underline; }
+
+        /* 贴吧 */
+        .tieba-page { display: none; }
+        .tieba-header { background: linear-gradient(135deg, #ffcc80, #ff9800); padding: 16px 22px; border-bottom: 2px solid #f57c00; }
+        .tieba-header h2 { color: #5d4037; font-size: 19px; margin-bottom: 5px; }
+        .tieba-header p { color: #8d6e63; font-size: 13px; }
+        .tieba-nav { background: #fff8e1; border-bottom: 1px solid #ffcc80; padding: 9px 22px; display: flex; gap: 16px; font-size: 14px; color: #5d4037; }
+        .tieba-nav span { cursor: pointer; }
+        .tieba-nav span:hover { color: #ff9800; text-decoration: underline; }
+        .tieba-back { display: inline-block; padding: 6px 16px; background: #ff9800; color: #fff; border-radius: 16px; font-size: 13px; cursor: pointer; margin: 12px 22px; border: none; }
+        .tieba-back:hover { background: #f57c00; }
+        .tieba-post { background: #fff; border: 1px solid #ffcc80; border-radius: 10px; margin: 16px 22px; padding: 22px; }
+        .tieba-post-title { font-size: 19px; font-weight: bold; color: #e65100; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 2px dashed #ffcc80; }
+        .tieba-post-meta { font-size: 13px; color: #999; margin-bottom: 16px; display: flex; gap: 16px; }
+        .tieba-post-content { font-size: 15px; color: #333; line-height: 1.9; margin-bottom: 16px; }
+        .tieba-post-stats { display: flex; gap: 22px; padding-top: 16px; border-top: 1px solid #ffcc80; font-size: 14px; color: #8d6e63; }
+        .tieba-post-stats span { cursor: pointer; }
+        .tieba-post-stats span:hover { color: #ff9800; }
+        .tieba-comments { margin: 16px 22px; }
+        .tieba-comments h3 { font-size: 16px; color: #5d4037; margin-bottom: 13px; padding-bottom: 9px; border-bottom: 1px solid #ffcc80; }
+        .tieba-comment { background: #fff; border: 1px solid #ffe0b2; border-radius: 8px; padding: 13px 16px; margin-bottom: 11px; }
+        .tieba-comment-header { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 13px; color: #999; }
+        .tieba-comment-user { color: #ff9800; font-weight: bold; }
+        .tieba-comment-content { font-size: 14px; color: #333; line-height: 1.7; }
+        .tieba-comment-actions { margin-top: 7px; font-size: 13px; color: #aaa; }
+        .tieba-comment-actions span { cursor: pointer; margin-right: 10px; }
+        .tieba-comment-actions span:hover { color: #ff9800; }
+        .hot-badge { display: inline-block; background: #ff5252; color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 12px; margin-left: 6px; vertical-align: middle; }
+
+        /* 围信 */
+        #wechat-win { top: 85px; left: 210px; width: 720px; height: 520px; }
+        .wechat-sidebar { width: 210px; background: #2e2e2e; display: flex; flex-direction: column; height: 100%; }
+        .wechat-user { padding: 22px; color: #fff; font-size: 15px; border-bottom: 1px solid #444; }
+        .wechat-list { flex: 1; overflow-y: auto; }
+        .wechat-item { padding: 16px; color: #ccc; cursor: pointer; border-bottom: 1px solid #333; transition: background 0.2s; }
+        .wechat-item:hover, .wechat-item.active { background: #444; color: #fff; }
+        .wechat-item.stranger { color: #ff5252; position: relative; }
+        .red-dot { display: none; position: absolute; top: 10px; right: 10px; width: 11px; height: 11px; background: #ff5252; border-radius: 50%; box-shadow: 0 0 5px rgba(255, 82, 82, 0.7); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 5px rgba(255, 82, 82, 0.7); } 50% { box-shadow: 0 0 10px rgba(255, 82, 82, 1); } 100% { box-shadow: 0 0 5px rgba(255, 82, 82, 0.7); } }
+        .wechat-chat { flex: 1; display: flex; flex-direction: column; background: #f5f5f5; }
+        .chat-header { padding: 16px; background: #fff; border-bottom: 1px solid #eee; font-weight: bold; color: #333; font-size: 15px; }
+        .chat-body { flex: 1; padding: 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 11px; }
+        .msg { max-width: 72%; padding: 11px 16px; border-radius: 10px; font-size: 14px; word-break: break-all; }
+        .msg.left { background: #fff; align-self: flex-start; border-bottom-left-radius: 3px; }
+        .msg.right { background: #95ec69; align-self: flex-end; border-bottom-right-radius: 3px; }
+        .msg.system { background: transparent; color: #999; font-size: 13px; align-self: center; }
+        .msg.file { background: #e8f5e9; border: 1px solid #c8e6c9; cursor: pointer; display: inline-block; }
+        .msg.file:hover { background: #c8e6c9; }
+
+        #recycle-win { top: 130px; left: 260px; width: 340px; height: 340px; }
+
+        /* ===== 游戏窗口增强样式 ===== */
+        #game-win { top: 0; left: 0; width: 100%; height: 100%; transform: none; z-index: 9998; }
+        #game-screen {
+            width: 100%; height: 100%; position: relative;
+            background-size: cover; background-position: center;
+            transition: background 1.5s ease;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute; border-radius: 50%; pointer-events: none;
+            animation: floatUp linear infinite; opacity: 0.4;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+        .day-counter {
+            position: absolute; top: 18px; left: 18px;
+            background: rgba(255,248,225,0.85); padding: 8px 18px; border-radius: 25px;
+            font-size: 15px; color: #5d4037; font-weight: bold; z-index: 5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); backdrop-filter: blur(5px);
+        }
+        .scene-name {
+            position: absolute; top: 18px; right: 18px;
+            background: rgba(255,248,225,0.85); padding: 8px 18px; border-radius: 25px;
+            font-size: 15px; color: #5d4037; font-weight: bold; z-index: 5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); backdrop-filter: blur(5px);
+        }
+        /* ============================================
+   【蕾伊人物立绘 - CSS样式】
+   立绘图片放置说明：
+   1. 将蕾伊的立绘图片放在与此HTML文件相同的目录下
+   2. 默认立绘命名为: leiyi.png (正常表情)
+   3. 开心立绘命名为: leiyi_happy.png (可选，不放则默认使用leiyi.png)
+   4. 伤心立绘命名为: leiyi_sad.png (可选，不放则默认使用leiyi.png)
+   5. 图片尺寸建议: 300px宽 x 450px高 (可根据需要调整下方width/height)
+   ============================================ */
+        .leiyi-character {
+            position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%);
+            width: 220px; height: 380px;
+            display: flex; align-items: flex-end; justify-content: center;
+            z-index: 2;
+            filter: drop-shadow(0 4px 15px rgba(0,0,0,0.2));
+            transition: all 0.5s ease;
+        }
+        .leiyi-character img {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            object-position: bottom center;
+            transition: opacity 0.5s ease;
+        }
+        .leiyi-character.happy {
+            animation: characterBounce 1s ease infinite;
+        }
+        @keyframes characterBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-15px); }
+        }
+        .leiyi-character.sad {
+            filter: drop-shadow(0 4px 15px rgba(0,0,0,0.2)) brightness(0.8);
+        }
+        
+        
+        .game-dialog-box {
+            background: rgba(255, 248, 230, 0.92); backdrop-filter: blur(10px);
+            border-top: 3px solid #ffcc80;
+            padding: 20px 25px; min-height: 280px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        }
+        .game-chat-messages {
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+            padding-bottom: 12px; margin-bottom: 12px;
+        }
+        .game-msg {
+            max-width: 85%; padding: 12px 18px; border-radius: 14px;
+            font-size: 14px; line-height: 1.6;
+            animation: gameFadeIn 0.5s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .game-msg.leiyi {
+            background: linear-gradient(135deg, #fff8e1, #fff3e0);
+            align-self: flex-start; border-bottom-left-radius: 4px;
+            color: #5d4037; border: 1px solid #ffe0b2;
+        }
+        .game-msg.player {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            align-self: flex-end; border-bottom-right-radius: 4px;
+            color: #fff;
+        }
+        .game-msg.system {
+            background: transparent; color: rgba(141, 110, 99, 0.6);
+            font-size: 13px; align-self: center; font-style: italic;
+            box-shadow: none;
+        }
+        @keyframes gameFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .game-choices {
+            display: flex; gap: 20px; margin-bottom: 14px;
+            justify-content: center; align-items: center;
+        }
+        .game-choice-btn {
+            flex: 1; max-width: 280px; padding: 14px 24px; border-radius: 25px;
+            border: 2px solid; cursor: pointer; font-size: 15px; font-weight: bold;
+            transition: all 0.3s; text-align: center;
+        }
+        .game-choice-btn.accompany {
+            border-color: #66bb6a; background: rgba(76, 175, 80, 0.15);
+            color: #2e7d32;
+        }
+        .game-choice-btn.accompany:hover {
+            background: rgba(76, 175, 80, 0.3); transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        .game-choice-btn.investigate {
+            border-color: #ef5350; background: rgba(255, 82, 82, 0.15);
+            color: #c62828;
+        }
+        .game-choice-btn.investigate:hover {
+            background: rgba(255, 82, 82, 0.3); transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
+        }
+        .game-input-area { display: flex; gap: 10px; align-items: center; }
+        .game-chat-input {
+            flex: 1; padding: 11px 18px; border-radius: 25px; border: 2px solid #ffe0b2;
+            outline: none; background: rgba(255,255,255,0.8); color: #5d4037;
+            font-size: 14px; transition: border-color 0.3s;
+        }
+        .game-chat-input:focus { border-color: #ff9800; }
+        .game-chat-input::placeholder { color: #bbb; }
+        .game-send-btn {
+            padding: 11px 24px; border-radius: 25px; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: #fff; font-size: 14px; font-weight: bold;
+            transition: all 0.3s; box-shadow: 0 3px 8px rgba(255, 152, 0, 0.3);
+        }
+        .game-send-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 12px rgba(255, 152, 0, 0.4); }
+        #password-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a0a0a 0%, #000 100%);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .pwd-inline-label {
+            color: #ff5252; font-size: 15px; margin-bottom: 10px;
+            text-align: center; width: 100%; font-weight: bold;
+        }
+        .pwd-inline-input {
+            padding: 10px 18px; border-radius: 25px;
+            border: 2px solid #ff5252; background: rgba(255,255,255,0.8);
+            color: #5d4037; outline: none; font-size: 14px; width: 200px;
+        }
+        .pwd-inline-input:disabled {
+            opacity: 0.5; cursor: not-allowed;
+        }
+        .pwd-title { font-size: 26px; color: #ff5252; margin-bottom: 30px; letter-spacing: 3px; text-shadow: 0 0 10px rgba(255,82,82,0.5); }
+        .pwd-input {
+            padding: 16px 24px; font-size: 18px; text-align: center;
+            border: 2px solid #ff5252; border-radius: 10px; background: rgba(255,255,255,0.05);
+            color: #fff; outline: none; width: 320px; margin-bottom: 22px;
+        }
+        .pwd-btn {
+            padding: 13px 45px; background: #ff5252; border: none; border-radius: 35px;
+            color: #fff; font-size: 17px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 82, 82, 0.4);
+        }
+        .pwd-btn:hover { background: #ff1744; transform: translateY(-2px); }
+        #notebook-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
+            z-index: 10000; backdrop-filter: blur(5px);
+        }
+        .notebook-content {
+            background: linear-gradient(135deg, #fff8e1, #fff3e0);
+            border-radius: 15px; padding: 40px; max-width: 600px; width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border: 3px solid #ffcc80;
+        }
+        .notebook-content h2 { color: #e65100; margin-bottom: 20px; font-size: 22px; text-align: center; }
+        .notebook-content p { color: #5d4037; font-size: 16px; line-height: 2; margin-bottom: 15px; text-indent: 2em; }
+        .notebook-close {
+            display: block; margin: 20px auto 0; padding: 10px 35px;
+            background: #ff9800; color: #fff; border: none; border-radius: 25px;
+            font-size: 15px; cursor: pointer; font-weight: bold;
+        }
+        .notebook-close:hover { background: #f57c00; }
+    /* 游戏全屏遮罩层样式 */
+        #game-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 9997; background: transparent;
+            pointer-events: none;
+        }
+        #game-overlay.active {
+            pointer-events: auto;
+        }
+        /* 确保笔记本图标默认隐藏 */
+        #notebook-icon {
+            display: none !important;
+        }
+    
+        /* ===== 管理员面板 ===== */
+        #admin-panel {
+            position: absolute;
+            top: 45px;
+            right: 10px;
+            width: 280px;
+            background: rgba(255, 248, 230, 0.95);
+            border: 2px solid #ffcc80;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        #admin-panel.open { display: flex; }
+        .admin-title-bar {
+            background: #ffcc80;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: move;
+        }
+        .admin-title-bar span {
+            font-size: 13px;
+            color: #5d4037;
+            font-weight: bold;
+        }
+        .admin-close-btn {
+            width: 18px;
+            height: 18px;
+            background: #ff5252;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+            font-weight: bold;
+        }
+        .admin-content {
+            padding: 15px;
+        }
+        .admin-row {
+            margin-bottom: 12px;
+        }
+        .admin-row label {
+            display: block;
+            font-size: 13px;
+            color: #5d4037;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .admin-row input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #ffe0b2;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .admin-row input:focus { border-color: #ff9800; }
+        .admin-btn {
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .admin-btn-set {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: #fff;
+        }
+        .admin-btn-set:hover {
+            background: linear-gradient(135deg, #f57c00, #e65100);
+            transform: translateY(-1px);
+        }
+        .admin-btn-reset {
+            background: linear-gradient(135deg, #66bb6a, #43a047);
+            color: #fff;
+            margin-left: 8px;
+        }
+        .admin-btn-reset:hover {
+            background: linear-gradient(135deg, #43a047, #2e7d32);
+            transform: translateY(-1px);
+        }
+        .admin-btn-close {
+            background: linear-gradient(135deg, #ef5350, #c62828);
+            color: #fff;
+            margin-top: 8px;
+        }
+        .admin-btn-close:hover {
+            background: linear-gradient(135deg, #c62828, #b71c1c);
+            transform: translateY(-1px);
+        }
+        .admin-status {
+            font-size: 12px;
+            color: #8d6e63;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 6px;
+        }
+        .admin-toggle-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 152, 0, 0.8);
+            border: 2px solid #ff9800;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #fff;
+            font-weight: bold;
+            z-index: 55;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .admin-toggle-btn:hover {
+            background: #ff9800;
+            transform: scale(1.1);
+        }
+
+        /* 结局黑屏遮罩样式 */
+        #ending-black-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, #2a0a0a 0%, #0d0000 40%, #000 80%);
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column; z-index: 99999;
+            overflow: hidden;
+        }
+        #ending-black-screen::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 30% 50%, rgba(255, 152, 0, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(255, 204, 128, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .ending-title {
+            font-size: 56px; color: #ffcc80; font-weight: bold;
+            margin-bottom: 60px; letter-spacing: 15px;
+            text-shadow: 0 0 50px rgba(255, 204, 128, 0.9), 0 0 100px rgba(255, 152, 0, 0.5), 0 0 150px rgba(255, 152, 0, 0.3);
+            animation: endingFadeIn 2s ease forwards;
+            position: relative;
+        }
+        .ending-title::after {
+            content: '';
+            display: block;
+            width: 200px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ffcc80, transparent);
+            margin: 20px auto 0;
+        }
+        .ending-message {
+            font-size: 28px; color: #ffe0b2; text-align: center;
+            line-height: 2.8; max-width: 750px; padding: 0 30px;
+            animation: endingFadeIn 2s ease 0.5s forwards;
+            opacity: 0;
+            text-shadow: 0 0 20px rgba(255, 204, 128, 0.7), 0 0 40px rgba(255, 152, 0, 0.3);
+            margin-bottom: 10px;
+        }
+        .ending-submessage {
+            font-size: 26px; color: #ffe0b2; text-align: center;
+            line-height: 2.8; max-width: 750px; padding: 0 30px;
+            animation: endingFadeIn 2s ease 1s forwards;
+            opacity: 0;
+            margin-top: 20px;
+            text-shadow: 0 0 20px rgba(255, 204, 128, 0.6), 0 0 40px rgba(255, 152, 0, 0.2);
+        }
+        .ending-subtitle {
+            font-size: 18px; color: #ffcc80; text-align: center;
+            line-height: 2.2; max-width: 650px; padding: 0 25px;
+            animation: endingFadeIn 2s ease 1s forwards;
+            opacity: 0;
+            margin-top: 15px;
+            text-shadow: 0 0 10px rgba(255, 204, 128, 0.4);
+        }
+        @keyframes endingFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #return-desktop-btn {
+            position: absolute; bottom: 40px; left: 40px;
+            padding: 16px 45px; background: rgba(255, 152, 0, 0.9);
+            border: 2px solid #ff9800; border-radius: 35px;
+            color: #fff; font-size: 18px; font-weight: bold;
+            cursor: pointer; transition: all 0.3s;
+            animation: endingFadeIn 2s ease 2s forwards;
+            opacity: 0;
+            box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
+        }
+        #return-desktop-btn:hover {
+            background: #ff9800; transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.6);
+        }
+</style>
+
+
+<!-- 
+==============================================
+  【蕾伊人物立绘 - 替换指南】
+==============================================
+  
+  本游戏使用人物立绘图片替代原来的CSS头像。
+  请按照以下方式放置图片文件：
+  
+  1. 将以下图片文件放在与此HTML文件【相同的目录】下：
+  
+     - leiyi.png        -> 蕾伊默认立绘（正常表情）【必须】
+     - leiyi_happy.png  -> 蕾伊开心表情立绘【可选】
+     - leiyi_sad.png    -> 蕾伊伤心表情立绘【可选】
+  
+  2. 图片尺寸建议：
+     - 宽度: 220px 左右
+     - 高度: 380px 左右（全身立绘）
+     - 格式: PNG（支持透明背景）
+  
+  3. 如果只放一张 leiyi.png，游戏也会正常运行，
+     只是不同情绪时不会切换图片而已。
+  
+  4. 如果想替换背景图片（稻田/河边/日落），
+     可以在 sceneData 数组中修改 bg 属性，
+     将 linear-gradient 替换为 url('你的图片路径')
+  
+==============================================
+--></head>
+<body>
+
+    <!-- 登录界面 -->
+    <div id="login-screen">
+        <div class="login-title">欢迎你！你的名字是？</div>
+        <input type="text" class="name-input" id="player-name" placeholder="在此输入名字...">
+        <button class="enter-btn" onclick="enterDesktop()">走 进 世 界</button>
+    </div>
+
+    <!-- 桌面界面 -->
+    <div id="desktop-screen">
+        <div class="desktop-area">
+            <div class="icon" onclick="openWindow('browser-win')">
+                <div class="icon-img icon-browser">&#127760;</div>
+                <div class="icon-text">兆度浏览器</div>
+            </div>
+            <div class="icon" onclick="openWindow('wechat-win')">
+                <div class="icon-img icon-wechat">&#128172;</div>
+                <div class="icon-text">围信</div>
+            </div>
+            <div class="icon" onclick="openWindow('recycle-win')">
+                <div class="icon-img icon-recycle">&#128465;</div>
+                <div class="icon-text">回收站</div>
+            </div>
+            <div id="game-icon" class="icon" style="display:none;" onclick="openWindow('game-win')">
+                <div class="icon-img icon-game">&#127969;</div>
+                <div class="icon-text">蕾伊的院子</div>
+            </div>
+            <div id="notebook-icon" class="icon" style="display:none;" onclick="openNotebook()">
+                <div class="icon-img icon-notebook">&#128221;</div>
+                <div class="icon-text">奇怪的笔记本</div>
+            </div>
+        </div>
+        <div class="taskbar"><div class="start-btn">开始</div></div>
+
+        <!-- 浏览器 -->
+        <div id="browser-win" class="window">
+            <div class="title-bar">
+                <span id="browser-title">&#127760; 兆度浏览器 - 首页</span>
+                <div class="close-btn" onclick="closeWindow('browser-win')"></div>
+            </div>
+            <div id="browser-home" class="window-content" style="flex-direction:column; padding:20px;">
+                <h2 style="color:#ff9800; text-align:center; margin-bottom:20px;">&#128269; 兆度搜索</h2>
+                <div class="zhao-search">
+                    <input type="text" placeholder="搜索你想知道的一切...">
+                    <button onclick="alert('兆度搜索暂未开放，请查看下方新闻')">搜 索</button>
+                </div>
+                <hr style="border: none; border-top: 1px solid #ffcc80; margin-bottom: 20px;">
+                <h3 style="color:#5d4037; margin-bottom:10px;">&#128240; 今日热点新闻</h3>
+                <ul class="news-list">
+                    <li class="news-item" onclick="openTieba()">
+                        <span style="color:#ff5252; font-weight:bold;">[热]</span>
+                        1. 厦门市湖里区12岁孩童失踪！这是第几个了？！
+                    </li>
+                    <li class="news-item">2. 打工人周末现状：周五晚上熬夜，周六睡到下午，周日晚上开始焦虑</li>
+                    <li class="news-item">3. 猫咪坐在键盘上不让工作，主人无奈只能单手打字</li>
+                    <li class="news-item">4. 食堂阿姨手抖视频走红，网友：这手法不去打篮球可惜了</li>
+                    <li class="news-item">5. 拼单满减凑到头秃，最后发现运费比省的钱还多</li>
+                    <li class="news-item">6. 年度表情包Top3出炉，第一个就让人破防了</li>
+                    <li class="news-item">7. 周末两天根本不够睡，建议实行双休变三休</li>
+                    <li class="news-item">8. 推荐一部冷门动漫，看完直呼绝绝子</li>
+                    <li class="news-item">9. 深圳天气又变脸，出门带伞还是带防晒？</li>
+                    <li class="news-item">
+                        <a href="https://space.bilibili.com/515895992?spm_id_from=333.1007.0.0" target="_blank" onclick="event.stopPropagation();">
+                            10. 关注UP主「磊风ALP」的个人空间，分享游戏、绘画、二次元内容，超多好玩的东西等你发现！
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div id="browser-tieba" class="tieba-page" style="display:none; flex-direction:column; height:100%;">
+                <div class="tieba-header">
+                    <h2>&#128293; 兆度贴吧 - 社会热点吧</h2>
+                    <p>关注社会，关注你我</p>
+                </div>
+                <div class="tieba-nav">
+                    <span>首页</span><span>热帖</span><span>最新</span><span>精华</span>
+                    <span style="margin-left:auto; cursor:pointer;" onclick="closeTieba()">&#8592; 返回新闻首页</span>
+                </div>
+                <div style="overflow-y:auto; flex:1; padding-bottom:20px;">
+                    <button class="tieba-back" onclick="closeTieba()">&#8592; 返回新闻列表</button>
+                    <div class="tieba-post">
+                        <div class="tieba-post-title">
+                            厦门市湖里区12岁孩童失踪！这是第几个了？！
+                            <span class="hot-badge">HOT</span>
+                        </div>
+                        <div class="tieba-post-meta">
+                            <span>发帖人：热心市民小张</span>
+                            <span>发布时间：今天 08:32</span>
+                            <span>浏览：1,287,453</span>
+                        </div>
+                        <div class="tieba-post-content">
+                            <p>姐妹们兄弟们，这事真的越想越不对劲。</p>
+                            <p>我有个朋友在湖里区那边上班，她说昨天下午听到隔壁小区有家长在哭，说自家12岁的孙女不见了。孩子叫依依（音），上六年级。</p>
+                            <p>最离谱的是，这孩子的父母，在孩子不见了之后居然没有第一时间报警！据邻居说，孩子妈妈第一个反应是"会不会去同学家玩了"，然后还在家里找了一圈，等了快两个小时才打电话报警。等警察到的时候，现场可能已经被翻过了。</p>
+                            <p>更离谱的是，有个邻居说，这家人连孩子平时穿多大码的鞋、喜欢去哪些地方、有没有什么朋友都不知道。孩子爸爸被问到孩子名字的时候，居然愣了好几秒才说出来...</p>
+                            <p>这算什么父母啊？！现在孩子已经失踪一天了，警方已经立案，但线索很少。求扩散！求关注！希望能尽快找到孩子！</p>
+                            <p style="margin-top:10px; color:#ff5252; font-weight:bold;">#厦门湖里区儿童失踪# #求扩散# #每个孩子都值得被找到#</p>
+                        </div>
+                        <div class="tieba-post-stats">
+                            <span onclick="incrementStat(this)">&#128077; 点赞 89,432</span>
+                            <span onclick="incrementStat(this)">&#128256; 转发 34,521</span>
+                            <span>&#128172; 评论 12,847</span>
+                            <span>&#128207; 收藏 5,632</span>
+                        </div>
+                    </div>
+                    <div class="tieba-comments">
+                        <h3>&#128172; 热门评论（12,847条）</h3>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@爱看新闻的阿花</span><span>1小时前</span></div><div class="tieba-comment-content">天呐这也太离谱了，孩子都失踪了还不赶紧报警？等什么呢？！希望孩子平安无事</div><div class="tieba-comment-actions"><span>&#128077; 3,421</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@厦门本地人</span><span>1小时前</span></div><div class="tieba-comment-content">我在湖里区住，昨天确实听到那边有动静，警察来了好几辆。希望小姑娘没事。</div><div class="tieba-comment-actions"><span>&#128077; 2,856</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@吃瓜不吐皮</span><span>52分钟前</span></div><div class="tieba-comment-content">连孩子名字都要想半天才说出来...这家人真的有问题吧？建议警方深入调查家庭关系</div><div class="tieba-comment-actions"><span>&#128077; 2,103</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@正义路人甲</span><span>45分钟前</span></div><div class="tieba-comment-content">已经转发朋友圈了，这种事儿就必须让更多人看到！万一有人认识呢？</div><div class="tieba-comment-actions"><span>&#128077; 1,987</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@心理老师老王</span><span>38分钟前</span></div><div class="tieba-comment-content">从描述来看，这家人对孩子的了解程度很不正常。建议不要忽视这个细节，也许事情比我们想象的复杂。</div><div class="tieba-comment-actions"><span>&#128077; 1,654</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@打工人小陈</span><span>30分钟前</span></div><div class="tieba-comment-content">刷到这条心都碎了...12岁啊，正是花一样的年纪。坏人怎么能对孩子下手！</div><div class="tieba-comment-actions"><span>&#128077; 1,234</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@侦探小说迷</span><span>25分钟前</span></div><div class="tieba-comment-content">等等，你们注意到没有？发帖人说"朋友在隔壁小区上班"，但整个帖子没有一个具体地址和照片，有点奇怪...大家理性吃瓜</div><div class="tieba-comment-actions"><span>&#128077; 987</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@妈妈群群主</span><span>20分钟前</span></div><div class="tieba-comment-content">我们已经在我们小区妈妈群里发了寻人启事，大家都出门帮忙找了。孩子一定能找到的！</div><div class="tieba-comment-actions"><span>&#128077; 876</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@深夜emo选手</span><span>15分钟前</span></div><div class="tieba-comment-content">每次看到这种新闻都觉得很无力...希望所有孩子都能平安长大</div><div class="tieba-comment-actions"><span>&#128077; 654</span><span>回复</span></div></div>
+                        <div class="tieba-comment"><div class="tieba-comment-header"><span class="tieba-comment-user">@法律科普君</span><span>10分钟前</span></div><div class="tieba-comment-content">提醒一下大家，如果孩子失踪超过24小时就可以立即报警，不需要等待！这是很多家长的误区。另外，拐卖儿童是重罪，刑法第240条明确规定了处罚标准。转发就是帮助！</div><div class="tieba-comment-actions"><span>&#128077; 543</span><span>回复</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 围信 -->
+        <div id="wechat-win" class="window">
+            <div class="title-bar"><span>&#128172; 围信 - 消息</span><div class="close-btn" onclick="closeWindow('wechat-win')"></div></div>
+            <div class="window-content" style="display:flex; padding:0;">
+                <div class="wechat-sidebar">
+                    <div class="wechat-user" id="wechat-user-name">我</div>
+                    <div class="wechat-list">
+                        <div class="wechat-item active" onclick="switchChat('mom', this)">老妈</div>
+                        <div class="wechat-item" onclick="switchChat('roommate', this)">大学室友-胖子</div>
+                        <div class="wechat-item" onclick="switchChat('boss', this)">老板</div>
+                        <div class="wechat-item" onclick="switchChat('delivery', this)">快递小哥</div>
+                        <div class="wechat-item stranger" id="stranger-contact" style="display:none;" onclick="switchChat('stranger', this)">未知号码<span class="red-dot" id="stranger-dot"></span></div>
+                    </div>
+                </div>
+                <div class="wechat-chat">
+                    <div class="chat-header" id="chat-title">老妈</div>
+                    <div class="chat-body" id="chat-body"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 回收站 -->
+        <div id="recycle-win" class="window">
+            <div class="title-bar"><span>&#128465; 回收站</span><div class="close-btn" onclick="closeWindow('recycle-win')"></div></div>
+            <div class="window-content" style="padding:15px;">
+                <p style="margin-bottom:8px;">&#128196; 废弃的日记.txt (已损坏)</p>
+                <p style="margin-bottom:8px;">&#128196; 寻人启事.docx</p>
+                <p>&#128247; 模糊的照片.jpg</p>
+            </div>
+        </div>
+
+        <!-- 游戏窗口 -->
+        <div id="game-win" class="window">
+            <div class="title-bar"><span>&#127969; 世界</span><div class="admin-toggle-btn" onclick="toggleAdminPanel()" title="管理员设置" style="position:static;">⚙</div></div>
+            <div class="window-content" style="padding:0;overflow:hidden;background:#000;">
+                <div id="game-screen">
+                    <div id="day-counter" class="day-counter">第 1 天</div>
+                    <div id="scene-name" class="scene-name"></div>
+                    <!-- ============================================
+     【蕾伊人物立绘 - 图片替换区】
+     请将蕾伊的立绘图片放在与此HTML文件相同的目录下：
+     - leiyi.png  -> 默认立绘（正常表情）
+     - leiyi_happy.png -> 开心表情立绘（可选）
+     - leiyi_sad.png -> 伤心表情立绘（可选）
+     如果不需要不同表情的立绘，只需放一张 leiyi.png 即可
+     ============================================ -->
+<div class="leiyi-character" id="leiyi-char">
+    <img id="leiyi-img" src="leiyi.png" alt="蕾伊">
+</div>
+                    <div style="flex:1;"></div>
+                                        <!-- 管理员面板 -->
+                    <div id="admin-panel">
+                        <div class="admin-title-bar">
+                            <span>管理员面板</span>
+                            <div class="admin-close-btn" onclick="toggleAdminPanel()">×</div>
+                        </div>
+                        <div class="admin-content">
+                            <div class="admin-row">
+                                <label>设置天数：</label>
+                                <input type="number" id="admin-day-input" min="1" max="999" value="1">
+                            </div>
+                            <div class="admin-row">
+                                <button class="admin-btn admin-btn-set" onclick="adminSetDay()">设定天数</button>
+                                <button class="admin-btn admin-btn-reset" onclick="adminResetDay()">重置为1天</button>
+                            </div>
+                            <div class="admin-row">
+                                <label>当前天数：</label>
+                                <div class="admin-status" id="admin-day-display">第 1 天</div>
+                            </div>
+                            <div class="admin-row">
+                                <label>快捷跳转：</label>
+                                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    <button class="admin-btn admin-btn-set" onclick="adminQuickDay(10)" style="font-size:12px; padding:6px 12px;">第10天</button>
+                                    <button class="admin-btn admin-btn-set" onclick="adminQuickDay(20)" style="font-size:12px; padding:6px 12px;">第20天</button>
+                                    <button class="admin-btn admin-btn-set" onclick="adminQuickDay(30)" style="font-size:12px; padding:6px 12px;">第30天</button>
+                                    <button class="admin-btn admin-btn-set" onclick="adminQuickDay(50)" style="font-size:12px; padding:6px 12px;">第50天</button>
+                                    <button class="admin-btn admin-btn-set" onclick="adminQuickDay(100)" style="font-size:12px; padding:6px 12px;">第100天</button>
+                                </div>
+                            </div>
+                            <div class="admin-row">
+                                <button class="admin-btn admin-btn-close" onclick="toggleAdminPanel()">关闭面板</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="game-dialog-box">
+                        <div id="chat-messages" class="game-chat-messages"></div>
+                        <div id="choices-area" class="game-choices"></div>
+                        <div class="game-input-area">
+                            <input type="text" id="chat-input" class="game-chat-input" placeholder="和蕾伊聊天...">
+                            <button onclick="sendPlayerMsg()" class="game-send-btn">发送</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏全屏遮罩层 - 阻止点击桌面 -->
+        <div id="game-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9997; background:transparent;"></div>
+
+        <!-- 密码锁 -->
+        <div id="password-overlay">
+            <div class="pwd-title">&#9888; 请输入密码</div>
+            <input type="password" id="pwd-input" class="pwd-input" placeholder="解锁真相...">
+            <button onclick="checkPassword()" class="pwd-btn">确 认</button>
+        </div>
+
+        <!-- 彩蛋记事本 -->
+        <div id="notebook-overlay" onclick="closeNotebook(event)">
+            <div class="notebook-content" onclick="event.stopPropagation();">
+                <h2>&#128221; 蕾伊的笔记本</h2>
+                <p>亲爱的玩家，谢谢你愿意陪伴孤独的蕾伊，无论你是为了探寻100天，还是因为你真的心疼这孩子，我都替她向你表达最真挚的感谢，谢谢你，愿你可以每天开开心心，和蕾伊一起，好吗？</p>
+                <button class="notebook-close" onclick="closeNotebook(event)">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    
+    
+    <script>
+    // ===== 桌面系统核心逻辑（保持不变） =====
+    let playerName = '';
+    let currentChat = 'mom';
+    let strangerAppeared = false;
+    let companionDays = parseInt(localStorage.getItem('leiyi_companion_days') || '0');
+
+    const chats = {
+        mom: [
+            { type: 'system', text: '昨天 22:30' },
+            { type: 'left', text: '周末回家吗？给你炖了排骨汤。' },
+            { type: 'right', text: '加班，下周回' },
+            { type: 'system', text: '今天 08:15' },
+            { type: 'left', text: '记得吃早饭，别空着肚子干活。' },
+            { type: 'right', text: '知道啦妈，你别忘了吃药' },
+            { type: 'left', text: '你爸昨晚说想你了，让你有空打个电话' },
+            { type: 'right', text: '好的，中午休息的时候打' },
+            { type: 'left', text: '对了，你衣服我洗了晒在阳台，记得收' },
+            { type: 'right', text: '好嘞，周末回去给你做顿好吃的' },
+            { type: 'left', text: '哈哈，那我先记着，别又放鸽子就行' }
+        ],
+        roommate: [
+            { type: 'system', text: '今天 09:30' },
+            { type: 'left', text: '兄弟你昨晚说的那个网页啥情况？' },
+            { type: 'right', text: '就一个匿名邮件发的，标题很奇怪' },
+            { type: 'left', text: '不会是中病毒了吧？你杀毒了没' },
+            { type: 'right', text: '查了没事，就是内容有点奇怪' },
+            { type: 'system', text: '今天 11:20' },
+            { type: 'left', text: '晚上一起打游戏不？新出了个副本' },
+            { type: 'right', text: '不打了，我在研究那个网页' },
+            { type: 'left', text: '神神秘秘的，你不会被骗了吧？' },
+            { type: 'right', text: '放心，我有数。就是觉得有点不对劲' },
+            { type: 'left', text: '行吧，有事随时喊我哈' },
+            { type: 'right', text: '谢了兄弟，改天请你吃饭' }
+        ],
+        boss: [
+            { type: 'system', text: '今天 09:00' },
+            { type: 'left', text: '那个方案改好了吗？下午开会要用。' },
+            { type: 'right', text: '快了快了，还有最后一点收尾。' },
+            { type: 'system', text: '今天 10:30' },
+            { type: 'left', text: '搞快点，客户催得紧。下午三点前发我。' },
+            { type: 'right', text: '收到，保证完成任务' },
+            { type: 'system', text: '今天 14:00' },
+            { type: 'left', text: '对了，你最近是不是有事？状态不太对' },
+            { type: 'right', text: '没事没事，就是没睡好' },
+            { type: 'left', text: '行，别太拼了。方案发我邮箱。' }
+        ],
+        delivery: [
+            { type: 'system', text: '今天 08:45' },
+            { type: 'left', text: '你好，你的快递到了，放驿站可以吗？' },
+            { type: 'right', text: '好的，谢谢！' },
+            { type: 'system', text: '今天 12:30' },
+            { type: 'left', text: '兄弟，有个你的快递要我签收回执，你方便吗？' },
+            { type: 'right', text: '方便方便，放门口就行' },
+            { type: 'left', text: '好嘞，这单我给你点个五星好评' }
+        ],
+        stranger: [
+            { type: 'system', text: '刚刚' },
+            { type: 'left', text: '真相.exe (2.4MB)', isFile: true }
+        ]
+    };
+
+    function enterDesktop() {
+        const name = document.getElementById('player-name').value.trim();
+        if (!name) { alert('请输入你的名字才能进入世界！'); return; }
+        playerName = name;
+        const loginScreen = document.getElementById('login-screen');
+        loginScreen.style.opacity = '0';
+        setTimeout(function() {
+            loginScreen.style.display = 'none';
+            document.getElementById('desktop-screen').style.display = 'flex';
+            document.getElementById('wechat-user-name').innerText = playerName;
+            renderChat('mom');
+
+        }, 800);
+    }
+
+    function openWindow(winId) {
+        document.getElementById(winId).style.display = 'flex';
+        if (winId === 'wechat-win') {
+            renderChat(currentChat);
+            if (!strangerAppeared) {
+                setTimeout(function() {
+                    document.getElementById('stranger-contact').style.display = 'block';
+                    document.getElementById('stranger-dot').style.display = 'block';
+                    strangerAppeared = true;
+                }, 10000);
+            }
+        }
+        if (winId === 'game-win') {
+            // 显示遮罩层阻止点击桌面
+            document.getElementById('game-overlay').classList.add('active');
+            setTimeout(() => initGame(), 300);
+        }
+    }
+
+    function closeWindow(winId) {
+        document.getElementById(winId).style.display = 'none';
+        if (winId === 'game-win') {
+            // 隐藏遮罩层，允许点击桌面
+            document.getElementById('game-overlay').classList.remove('active');
+            gameActive = false;
+            const pwdOverlay = document.getElementById('password-overlay');
+            if (pwdOverlay && pwdOverlay.style.display === 'flex') {
+                // 密码界面正在显示，保持不动
+            } else {
+                if (pwdOverlay) pwdOverlay.style.display = 'none';
+            }
+            const gameScreen = document.getElementById('game-screen');
+            if (gameScreen) gameScreen.style.filter = 'none';
+            // 重置蕾伊立绘
+            const charEl = document.getElementById('leiyi-char');
+            if (charEl) {
+                charEl.classList.remove('happy', 'sad');
+            }
+            const imgEl = document.getElementById('leiyi-img');
+            if (imgEl) {
+                imgEl.src = 'leiyi.png';
+                imgEl.style.opacity = '1';
+            }
+        }
+    }
+
+    function openTieba() {
+        document.getElementById('browser-home').style.display = 'none';
+        document.getElementById('browser-tieba').style.display = 'flex';
+        document.getElementById('browser-title').innerText = '兆度浏览器 - 兆度贴吧';
+    }
+    function closeTieba() {
+        document.getElementById('browser-tieba').style.display = 'none';
+        document.getElementById('browser-home').style.display = 'flex';
+        document.getElementById('browser-title').innerText = '兆度浏览器 - 首页';
+    }
+
+    function switchChat(chatId, element) {
+        currentChat = chatId;
+        document.querySelectorAll('.wechat-item').forEach(function(el) { el.classList.remove('active'); });
+        if (element) element.classList.add('active');
+        if (chatId === 'stranger') {
+            var dot = document.getElementById('stranger-dot');
+            if (dot) dot.style.display = 'none';
+        }
+        renderChat(chatId);
+    }
+
+    function renderChat(chatId) {
+        const chatBody = document.getElementById('chat-body');
+        const chatTitle = document.getElementById('chat-title');
+        const data = chats[chatId];
+        const titles = { mom: '老妈', roommate: '大学室友-胖子', boss: '老板', delivery: '快递小哥', stranger: '未知号码' };
+        chatTitle.innerText = titles[chatId] || '聊天';
+        chatBody.innerHTML = '';
+        data.forEach(function(msg) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + msg.type;
+            div.innerText = msg.text;
+            if (msg.isFile) {
+                div.classList.add('file');
+                div.onclick = downloadGame;
+            }
+            chatBody.appendChild(div);
+        });
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function downloadGame() {
+        const fileDiv = document.querySelector('.msg.file');
+        if (!fileDiv || fileDiv.innerText.includes('下载完成')) return;
+        fileDiv.innerHTML = '正在下载... 0%';
+        fileDiv.style.cursor = 'default';
+        let progress = 0;
+        const timer = setInterval(function() {
+            progress += 20;
+            fileDiv.innerHTML = '正在下载... ' + progress + '%';
+            if (progress >= 100) {
+                clearInterval(timer);
+                fileDiv.innerHTML = '下载完成！请查看桌面';
+                fileDiv.style.background = '#c8e6c9';
+                fileDiv.onclick = null;
+                document.getElementById('game-icon').style.display = 'flex';
+            }
+        }, 2000);
+    }
+
+    function incrementStat(el) {
+        const text = el.innerText;
+        const match = text.match(/([\u4e00-\u9fa5\s]+)([\d,]+)/);
+        if (match) {
+            const num = parseInt(match[2].replace(/,/g, '')) + 1;
+            el.innerText = match[1] + num.toLocaleString();
+        }
+    }
+
+    // 窗口拖拽
+    document.querySelectorAll('.title-bar').forEach(function(bar) {
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+        bar.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            const win = bar.parentElement;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = win.offsetLeft;
+            initialY = win.offsetTop;
+            if (win.style.transform) { win.style.transform = 'none'; }
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            const activeBar = document.querySelector('.title-bar:active');
+            if (activeBar) {
+                const win = activeBar.parentElement;
+                win.style.left = (initialX + dx) + 'px';
+                win.style.top = (initialY + dy) + 'px';
+            }
+        });
+        document.addEventListener('mouseup', function() { isDragging = false; });
+    });
+
+    
+    // ===== "世界" 游戏逻辑（旁白驱动版） =====
+    let gameInitialized = false;
+    let gameDay = 1;
+    let sceneIndex = 0;
+    let investigateCount = 0;
+    let gameActive = false;
+    let isChoiceWaiting = false;
+    let passwordRequired = false;
+    let hasPromisedLeiyi = false;
+    let foreverMode = false;
+    let leiyiAppHiddenByEnding = false; // 标记蕾伊app是否因告别结局而消失
+    // 从localStorage恢复永远陪伴模式
+    if (localStorage.getItem('leiyi_forever_mode') === 'true') {
+        foreverMode = true;
+    }
+    
+    // 暖色调背景 - 从早到晚，没有晚上
+    const sceneData = [
+        {
+            name: '金色稻田',
+            bg: 'linear-gradient(to bottom, #FFE4B5 0%, #FFD700 25%, #DAA520 50%, #8B7355 75%, #6B4423 100%)',
+            // 旁白开场 - 不再是蕾伊带领，而是旁白叙述
+            narrationOpen: '你睁开眼睛，发现自己站在一片金黄色的稻田边。阳光洒在身上暖暖的，风吹过稻穗发出沙沙的声响。不远处，一个小小的身影正蹲在地上看着什么。',
+            leiyiFirst: '你是叫' + '{name}' + '吗？太好了！我终于等到你了。',
+            investigateText: '你蹲下来仔细观察稻田，发现稻穗虽然金黄饱满，但却纹丝不动——明明能感觉到微风拂过脸颊，这些稻子却像被施了定身咒一样，连一片叶子都没有摇晃。你注意到稻田里偶尔有小东西在动，像是青蛙跳过的痕迹，但放眼望去，整片稻田安静得不可思议...',
+            choices: ['陪蕾伊在稻田边逛逛', '仔细调查稻田'],
+            companionOptions: ['陪蕾伊在稻田边逛逛', '帮蕾伊在稻田里找小青蛙', '陪蕾伊去稻田深处看看', '在稻田边陪蕾伊晒太阳'],
+            companionResponses: ['好呀，一起去看看！', '哇，稻田里一定有很多好玩的东西！走吧走吧！', '嗯！我带你去稻田深处，那里有更好的风景哦！', '好呀好呀，稻田边的风好舒服~']
+        },
+        {
+            name: '宁静河边',
+            bg: 'linear-gradient(to bottom, #87CEEB 0%, #98FB98 30%, #4682B4 60%, #2E8B57 80%, #228B22 100%)',
+            narrationOpen: '你们沿着田埂往前走，不知不觉来到了一条小河边。河水清澈见底，阳光照在水面上闪闪发光。蕾伊蹲在河边，伸手去碰那些水底的石头。',
+            leiyiFirst: '你看这些石头！好光滑好光滑！这是河爷爷送给我的礼物哦。',
+            investigateText: '你盯着河面久久不愿移开视线。水流确实太平静了——平静得可怕。你捡起一块石头扔进去，水面竟然没有泛起正常的涟漪，而是像被什么东西吞没了波动。刚才钓上鱼时鱼竿明明剧烈抖动过，可水面却没有泛起任何波纹，就像...就像这一切只是一场精心布置的幻象...',
+            choices: ['和蕾伊一起在河边玩', '仔细调查河水'],
+            companionOptions: ['和蕾伊一起在河边玩', '陪蕾伊捡河里的光滑石头', '坐在河边陪蕾伊看风景', '陪蕾伊在河边钓鱼'],
+            companionResponses: ['好呀好呀！河边的石头可好玩了！', '嗯！我们去河边吧，我发现了好多漂亮的石头！', '河边有好多光滑的石头，你一定会喜欢的！走吧走吧~', '好呀！钓鱼也很好玩哦，我教你！']
+        },
+        {
+            name: '黄昏小屋',
+            bg: 'linear-gradient(to bottom, #FF7F50 0%, #FF4500 20%, #FF8C00 45%, #FFD700 70%, #2F4F4F 100%)',
+            narrationOpen: '太阳开始西斜，天空被染成了橘红色。你们不知不觉走到了村口一座破旧的小屋前。屋顶的瓦片已经坏了不少，但小屋前面的空地却收拾得很干净。蕾伊坐在台阶上，仰头看着天空。',
+            leiyiFirst: '你看那边的日落，好漂亮对不对？你靠过来一点嘛，这里的风有点凉。',
+            investigateText: '你趁蕾伊专注看日落的时候悄悄回头，发现那座破旧小屋的窗户缝里，隐约露出一本沾着泥巴的旧笔记本。你揉了揉眼睛再看时，它却消失了，仿佛从未存在过。你注意到小屋周围的草地有不同寻常的痕迹，像是有人长期在这里进进出出...',
+            choices: ['陪蕾伊看日落', '仔细调查小屋'],
+            companionOptions: ['陪蕾伊看日落', '坐在蕾伊身边一起看天', '陪蕾伊在小屋周围走走', '帮蕾伊把被风吹乱的头发理好'],
+            companionResponses: ['好呀！日落很好看哦，我带你去看！', '嗯！我最喜欢看日落了，走吧！', '走吧，我知道一个看日落最好的地方！', '好...好呀。你人真好。']
+        }
+    ];
+
+    // 每个场景陪伴时的连贯旁白剧情
+    const sceneAccompanyNarrations = {
+        rice: [
+            '你们在稻田边慢慢走着。蕾伊蹦蹦跳跳地走在前面，时不时蹲下来看看稻田里的东西。',
+            '蕾伊突然停下脚步，指着稻田深处说："你看！那边有东西在动！"',
+            '一只小青蛙从稻丛里跳了出来，呱呱叫了两声，又跳回了稻田深处。蕾伊笑着说："它一定很忙吧，在稻田里捉虫子。等秋天收完了，它就可以休息了。"'
+        ],
+        river: [
+            '蕾伊蹲在河边，把小手伸进温水里，脸上露出了开心的笑容。',
+            '她捡起一块光滑的鹅卵石，举起来给你看："你看！这块是不是像鸡蛋一样圆？这是河爷爷送给我的！"',
+            '你们坐在河边的草地上，看着阳光在水面上跳舞。蕾伊小声说："这条河好安静哦，安静得好像整个世界都只剩下我们两个人了..."',
+            '蕾伊突然说："看着看着，肚子也饿了。你陪着蕾伊一起来到了河边准备钓鱼好不好？"你们找了根树枝当鱼竿，坐在河边等鱼上钩。虽然半天没钓到，但蕾伊说她已经很开心了。'
+        ],
+        hut: [
+            '你们坐在破旧小屋前的台阶上，一起看着天空慢慢变颜色。',
+            '蕾伊小心翼翼地往你这边靠了靠，肩膀轻轻碰到了你的肩膀。',
+            '她小声说："你身上暖暖的，靠着好舒服...我有时候会想，要是可以一直这样就好了..."',
+            '夕阳把你们的影子拉得很长很长。蕾伊把头轻轻靠在了你的肩膀上，闭上眼睛说："和你在一起的时候，我觉得自己是世界上最幸福的人。"'
+        ]
+    };
+
+    // 每天结束时的不同旁白结束语
+    // ============================================
+    // 【蕾伊立绘切换函数】
+    // 根据情绪切换不同的立绘图片
+    // 如果用户没有提供不同表情的图片，会自动回退到默认leiyi.png
+    // ============================================
+    function switchLeiyiImage(emotion) {
+        const img = document.getElementById('leiyi-img');
+        if (!img) return;
+        // 先淡出
+        img.style.opacity = '0';
+        setTimeout(() => {
+            let src = 'leiyi.png';
+            if (emotion === 'happy') src = 'leiyi_happy.png';
+            else if (emotion === 'sad') src = 'leiyi_sad.png';
+            // 尝试加载图片，如果失败则使用默认图片
+            const testImg = new Image();
+            testImg.src = src;
+            testImg.onload = function() {
+                img.src = src;
+                img.style.opacity = '1';
+            };
+            testImg.onerror = function() {
+                // 如果指定表情的图片不存在，使用默认图片
+                img.src = 'leiyi.png';
+                img.style.opacity = '1';
+            };
+        }, 300);
+    }
+
+    // 陪伴选项文本池（每次随机选择，让选项不重复）
+    const companionChoicePool = {
+        rice: [
+            '陪蕾伊在稻田边逛逛',
+            '帮蕾伊在稻田里找小青蛙',
+            '陪蕾伊去稻田深处看看',
+            '在稻田边陪蕾伊晒太阳',
+            '和蕾伊一起在稻田里散步'
+        ],
+        river: [
+            '和蕾伊一起在河边玩',
+            '陪蕾伊捡河里的光滑石头',
+            '坐在河边陪蕾伊看风景',
+            '陪蕾伊在河边钓鱼',
+            '帮蕾伊把脚伸进温水里'
+        ],
+        hut: [
+            '陪蕾伊看日落',
+            '坐在蕾伊身边一起看天',
+            '陪蕾伊在小屋周围走走',
+            '帮蕾伊把被风吹乱的头发理好',
+            '给蕾伊讲一个故事'
+        ]
+    };
+
+    // 蕾伊对陪伴选项的回复（每次随机选择）
+    // 陪伴选项与蕾伊回复的配对映射（每个选项对应更自然的回复）
+    const companionActionResponses = {
+        rice: [
+            {
+                action: '陪蕾伊在稻田边逛逛',
+                leiyiProposal: ['那个...你等一下，可以陪陪我吗？我们一起去看稻田吧。', '嗯...那个，你愿意陪我去稻田那边看看吗？我好久没去了。', '对了！我们一起去稻田好不好？那里的稻子现在最好看了！'],
+                playerResponses: ['好呀，我们一起去吧！', '你喜欢吗？那就走吧。', '嗯，走吧，我陪你去。', '好啊，稻田那边有什么好玩的？', '行啊，正好我也想出去走走。', '好！我跟你一起去！'],
+                leiyiFollowUp: ['好呀，我们一起去稻田逛逛吧！', '好呀好呀，稻田边的风好舒服~我们快去！', '嘿嘿，你人真好！走吧走吧！']
+            },
+            {
+                action: '帮蕾伊在稻田里找小青蛙',
+                leiyiProposal: ['说到青蛙...稻田里有很多小青蛙哦，你要不要帮我一起找？', '对了！稻田里有小青蛙，我们去找它们玩好不好？', '我听说稻田里住了好多小青蛙，一起去看看有没有？'],
+                playerResponses: ['找小青蛙？好主意，我们快去！', '小青蛙？好啊，我陪你找！', '行，稻田里找青蛙，听起来很有趣！', '好呀！找完青蛙我们还可以在稻田里玩！', '没问题，走吧！'],
+                leiyiFollowUp: ['哇！找小青蛙！我知道哪里有，快跟我来！', '好呀好呀！青蛙呱呱叫的声音好好听！', '你真好，知道我喜欢小青蛙！走吧！']
+            },
+            {
+                action: '陪蕾伊去稻田深处看看',
+                leiyiProposal: ['你...你想不想去稻田最里面的看看？那里很少有人去。', '稻田深处有一个小山坡，风景特别好，我带你去吧！', '那个...你愿意陪我去稻田深处吗？我...我想去那里。'],
+                playerResponses: ['稻田深处？好啊，我陪你去看看！', '行，你带我去看看！', '好啊，深处有什么秘密吗？', '走吧走吧，我跟你去！', '嗯，一起去看看也没什么不好的。'],
+                leiyiFollowUp: ['嗯！稻田深处有更好的风景哦，我带你去！', '好呀！不过深处可能会有小蛇哦，你要牵好我的手！', '你真好...那我们快走吧！']
+            },
+            {
+                action: '在稻田边陪蕾伊晒太阳',
+                leiyiProposal: ['这里好暖和...你要不要坐下来，陪我晒会儿太阳？', '太阳好好看，我们坐在稻田边晒太阳好不好？', '嗯...那个，你能不能在阳光下陪我坐一会儿？就一会儿。'],
+                playerResponses: ['晒太阳？好主意，我也正好想休息一下', '好啊，晒太阳最舒服了，走吧！', '行，我陪你晒会儿太阳。', '好呀，稻田边的阳光一定很舒服。', '没问题，坐会儿也好。'],
+                leiyiFollowUp: ['好呀~晒太阳最舒服了，你快过来坐！', '嗯！阳光照在身上暖暖的，像你一样~', '嘿嘿...你真好，愿意陪我发呆。']
+            },
+            {
+                action: '和蕾伊一起在稻田里散步',
+                leiyiProposal: ['我们去稻田里走走吧？踩在泥土上感觉很好的！', '稻田里的路很好走，我们一起散步好不好？', '你...你陪我去稻田里走走可以吗？我想和你多待一会儿。'],
+                playerResponses: ['在稻田里散步？听起来好棒！', '好啊，散步也好，活动活动筋骨。', '行，我陪你走走。', '好呀，稻田里散步一定很舒服。', '走吧，听你的！'],
+                leiyiFollowUp: ['好呀好呀！在稻田里散步最开心了！', '走吧走吧！今天的稻花好香啊！', '你真好...和你散步的感觉，很好。']
+            }
+        ],
+        river: [
+            {
+                action: '和蕾伊一起在河边玩',
+                leiyiProposal: ['河边好漂亮的，我们去那边玩一会儿好不好？', '对了！我们去河边吧！我好久没去河边了。', '那个...你愿意陪我去河边玩吗？河水现在一定很好玩。'],
+                playerResponses: ['去河边玩！好呀好呀！', '好啊，河边有什么好玩的？', '行，我陪你去河边。', '好！走吧走吧！', '没问题，去河边转转也好。'],
+                leiyiFollowUp: ['好呀好呀！河边的事情最好玩了！', '哇！我们快去河边吧！', '嘿嘿，你真好！走吧走吧！']
+            },
+            {
+                action: '陪蕾伊捡河里的光滑石头',
+                leiyiProposal: ['你看河里的石头，好光滑好光滑！我们一起捡好不好？', '河底有很多漂亮的石头，我帮你一起找，好不好？', '那个...你陪我去河边捡石头吧？我最喜欢光滑的石头了。'],
+                playerResponses: ['捡石头吗？好啊，我帮你一起找！', '好呀，河里的石头一定很好看！', '行，我陪你捡石头。', '好啊，捡完石头我们还可以看河水！', '没问题，走吧！'],
+                leiyiFollowUp: ['好呀！我们去捡石头吧，我发现了好多漂亮的！', '嗯！河里的石头圆圆的可好玩了，你快来！', '你真好...和你一起捡石头，很开心。']
+            },
+            {
+                action: '坐在河边陪蕾伊看风景',
+                leiyiProposal: ['我们坐在河边看风景吧？这里的河水最好看了。', '你看，河好漂亮，我们一起坐着看一会儿好不好？', '那个...你能不能在河边陪我坐一会儿？就我们两个人。'],
+                playerResponses: ['好呀，河边的风景一定很美', '好啊，坐会儿也好，我陪你。', '行，河边的风景确实不错。', '好呀，走吧，我跟你去。', '没问题，看看河水也挺放松的。'],
+                leiyiFollowUp: ['好呀~河边的风景最好看了，我们坐下吧！', '嗯！你陪我一起看河，我就很开心了。', '嘿嘿...你真好，愿意陪我坐这么久。']
+            },
+            {
+                action: '陪蕾伊在河边钓鱼',
+                leiyiProposal: ['我们去河边钓鱼吧！我教你怎么钓，很好玩的！', '对了！我们钓鱼去吧！虽然我不太会，但一起钓鱼很开心。', '那个...你陪我去河边钓鱼好不好？我想和你一起钓。'],
+                playerResponses: ['钓鱼？好啊，我陪你一起去！', '好呀，钓鱼也很好玩，走吧！', '行，我陪你钓鱼。', '好啊，看看我们能钓到什么！', '没问题，走吧走吧！'],
+                leiyiFollowUp: ['好呀！钓鱼也很好玩哦，我教你！', '哇！那我们快去找树枝当鱼竿吧！', '你真好...和你一起钓鱼，时间过得好快。']
+            },
+            {
+                action: '帮蕾伊把脚伸进温水里',
+                leiyiProposal: ['河里的水暖暖的，你要不要也来试试？我帮你。', '来，我把你的脚放进温水里，很舒服的！', '那个...你的脚冷不冷？我帮你放进温水里暖暖好不好？'],
+                playerResponses: ['河水暖暖的，你也来试试！', '好呀，河水温温的很舒服！', '行，我帮你。', '好啊，河水暖暖的确实很舒服。', '没问题，来吧！'],
+                leiyiFollowUp: ['嘿嘿，河水暖暖的，踩进去好舒服~你快来！', '好呀好呀！水温刚刚好，你脚冷不冷？', '你真好...你的手好暖和。']
+            }
+        ],
+        hut: [
+            {
+                action: '陪蕾伊看日落',
+                leiyiProposal: ['你看！太阳快要下山了，我们去那边看日落好不好？', '日落...日落的时候天空会变得好漂亮，我带你去看！', '那个...你愿意陪我去看日落吗？这是我...最喜欢的时候。'],
+                playerResponses: ['日落？好呀，我们快去！', '好啊，日落一定很好看！', '行，我陪你去。', '好呀，走吧！', '没问题，一起去！'],
+                leiyiFollowUp: ['好呀！日落很好看哦，我带你去看！', '嗯！我最喜欢看日落了，走吧走吧！', '嘿嘿...你真好，每次都陪我看日落。']
+            },
+            {
+                action: '坐在蕾伊身边一起看天',
+                leiyiProposal: ['我们坐着看天吧？今天的云好好看。', '你看天上，有好多云！我们一起看好不好？', '那个...你能不能在旁边陪我看看天？就一会儿。'],
+                playerResponses: ['一起看天吗？好啊~', '好呀，看天也挺舒服的。', '行，我陪你看看。', '好啊，天上的云确实很好看。', '没问题，坐会儿吧。'],
+                leiyiFollowUp: ['好呀~一起看天的时候，感觉离星星好近好近。', '嗯！你陪我一起看，天上的云都会变得更好看！', '你真好...和你一起看天的时候，我觉得好幸福。']
+            },
+            {
+                action: '陪蕾伊在小屋周围走走',
+                leiyiProposal: ['我们在这附近走走吧？我知道一些小路。', '小屋后面有一条小路，风景很好，我带你去！', '那个...你陪我在小屋周围转转可以吗？我想和你多待一会儿。'],
+                playerResponses: ['走走也好，活动活动筋骨', '好啊，周围有什么好玩的？', '行，我陪你走走。', '好呀，走吧！', '没问题，一起去看看。'],
+                leiyiFollowUp: ['好呀，小屋周围有什么好玩的吗？', '嗯！我知道小屋后面有一条小路，我带你去！', '你真好...和你一起走路，感觉很安心。']
+            },
+            {
+                action: '帮蕾伊把被风吹乱的头发理好',
+                leiyiProposal: ['风好大...你的头发乱了，我帮你理一下好不好？', '等一下，你头发被风吹乱了，我帮你弄好。', '那个...可以吗？我想帮你把头发理一下...如果你不介意的话。'],
+                playerResponses: ['你的头发被风吹乱了，我帮你理一下', '好啊，等一下，我帮你弄好。', '行，别动，我帮你理一下。', '好呀，你头发确实有点乱了。', '没问题，我来！'],
+                leiyiFollowUp: ['你...你真好。', '嘿嘿，你手好暖和...', '你的手指...好温柔...']
+            },
+            {
+                action: '给蕾伊讲一个故事',
+                leiyiProposal: ['我给你讲故事好不好？我讲的故事可好听了！', '你累不累？我给你讲个故事吧，可有趣了！', '那个...你想不想听故事？我讲给你听好不好？'],
+                playerResponses: ['给我讲故事吗？好啊，你想听什么？', '好呀好呀，快讲快讲！', '行，我听听看。', '好啊，你讲故事一定很好听。', '没问题，来吧！'],
+                leiyiFollowUp: ['好呀好呀！你讲故事好好听，快讲快讲！', '嗯！我最喜欢听故事了，你讲什么我都喜欢听！', '你真好...听你说话，我就很开心了。']
+            }
+        ]
+    };;
+
+    const dayEndNarrations = [
+        '太阳慢慢落下了山，天边只剩下最后一抹橘红色的光。蕾伊站起身，拍了拍裙子上的草屑。',
+        '风渐渐凉了，蕾伊抱了抱自己的胳膊，抬头看着你。',
+        '远处的稻田在暮色中变成了一片深金色，整个世界都安静了下来。',
+        '河边的萤火虫开始飞了出来，一点一点的光在暮色中闪烁。',
+        '小屋周围的虫鸣声渐渐响了起来，夜晚即将降临。'
+    ];
+
+    // 每天结束前蕾伊说的话（每天不同）
+    const dayEndMessages = [
+        '你明天...还会来陪我吗？',
+        '你走了之后，这里突然变得好安静...不过没关系，我会等你的。',
+        '你是不是也要回到你的世界去了？...没关系，我等你。',
+        '今天真的很开心...但是太阳还是要落山的，对吗？',
+        '我有点害怕...不是怕黑，是怕你不在的时候，这里会变成什么样。',
+        '你知道吗，每次你离开后，我都会把今天的回忆好好收起来。',
+        '明天...我们能去更远的地方吗？我想知道这个世界有多大。',
+        '你答应过我的，要一直陪我玩的，不可以反悔哦。',
+        '有时候我觉得...和你在一起的时光，比我记得的所有事情都珍贵。',
+        '天黑了...你能不能...不要走得太远？我就在你身边。',
+        '今天的风好温柔，就像你来的时候一样。明天见。',
+        '我数了三颗星星、两朵云、还有一片特别的叶子...都是今天开心的证明。',
+        '你说话的时候，我会偷偷记住每一个字。这样你不在的时候，我就能再听一遍了。',
+        '如果明天醒来你不在的话...我就去稻田里找你，去河边找你，去哪里都找你。',
+        '谢谢你今天陪我。你是这个世界上...最好的人。'
+    ];
+
+    // 蕾伊的日常聊天回复库
+    const leiyiDailyReplies = {
+        happy: [
+            '嘿嘿，和你在一起每一天都很开心呢！',
+            '你今天看起来心情不错呀，是有什么好事吗？',
+            '你知道吗，我刚才看到一只蝴蝶，翅膀上有花纹，好漂亮！',
+            '我喜欢这里，有稻田、有小河、还有你！',
+            '你笑起来的样子很好看呢，要多笑笑哦！',
+            '今天的风好舒服，吹过来的时候暖暖的...',
+            '我刚刚在河边看到一朵小花，白色的，很可爱！',
+            '你说我们以后每天都来这里玩好不好？',
+            '你讲的这个故事好好听！然后呢然后呢？',
+            '我觉得你真是个很好很好的人呢！'
+        ],
+        self: [
+            '我...我好像以前有过一个院子，里面有很多花...但是记不太清了。',
+            '我不太记得以前的事情了，只记得我喜欢稻田和日落。',
+            '我有时候会做梦，梦里有一个很大的院子，有很多颜色的花...但醒了就忘了。',
+            '我叫蕾伊，这是我唯一记得很清楚的名字。其他的...都模模糊糊的。',
+            '我虽然不记得以前的事，但我觉得现在这样就很幸福了。有你陪我。',
+            '我好像...好像以前有个人经常陪我玩...是谁呢？我想不起来了...'
+        ],
+        world: [
+            '这个世界很好呀！有金色的稻田，清清的小河，还有好看的日落！',
+            '我也不知道这个世界有多大，我只知道我能去的地方就这些。',
+            '你说过的那些地方...是什么样的？听起来好有趣！',
+            '这里什么都没有坏事发生，每天都开开心心的，不是很好吗？',
+            '有时候我觉得这个世界好像...嗯，不想了，想太多头会疼的。',
+            '你跟我讲外面的世界吧！我从来没去过别的地方呢！'
+        ],
+        confused: [
+            '抱歉...我不了解这些事情。',
+            '你说的这些...我听不懂，对不起。',
+            '我没办法回答这个问题，对不起...',
+            '这个话题让我有点不舒服，我们聊点别的吧？',
+            '我不记得那些事了，也不想记起来...我们去看稻田好不好？',
+            '对不起，我不知道你在说什么。我们玩游戏吧！',
+            '那些事情...我不想想了。你有听过一个很好的故事吗？给我讲讲吧！',
+            '我...我好像听到了一些声音，但说不清楚...我们不去想它了好不好？'
+        ],
+        generic: [
+            '嗯嗯！然后呢？',
+            '哈哈，你说得对！',
+            '真的吗？好期待接下来会发生什么！',
+            '你懂的好多呀，教我教我！',
+            '嘻嘻，你真好！',
+            '今天天气真好，适合出去玩！',
+            '我有点饿了...我们等会儿去钓鱼好不好？',
+            '你知道吗，我刚才发现了一棵好大的树！',
+            '你说话的声音好好听，像风吹过稻田的声音...',
+            '要是能一直这样下去就好了...'
+        ],
+        // ===== 精确关键词回复 =====
+        exact: {
+            hello: [
+                '我很好哦，谢谢你的关心！你呢？',
+                '嘿嘿，看到你我就很开心啦！',
+                '我很好呀！今天也想和你一起玩！',
+                '嗯！我一直在等你呢，你来了我就更好了！'
+            ],
+            eat: [
+                '现在还不是吃饭的时候哦...不过你说的好饿...',
+                '吃饭？我不太记得吃饭是什么感觉了...',
+                '唔...你说吃饭啊，我也不知道这里的饭在哪里...',
+                '你饿了吗？我这里有稻谷...不对，那个不能吃...',
+                '吃饭好呀...可是这里好像没有厨房的样子...',
+                '你问我吃饭了吗？我...我好像不太需要吃饭呢...'
+            ],
+            callLeiYi: [
+                '我在哦，有什么事吗？',
+                '嗯！我在呢，你怎么啦？',
+                '蕾伊在这里！找我有什么事吗？',
+                '我在哦！你叫我干嘛呀？',
+                '诶？！我在呢！是不是想和我玩呀？',
+                '我在！你终于肯理我了嘿嘿...'
+            ],
+            areYouThere: [
+                '我在呢！一直都在哦！',
+                '在的在的！你怎么啦？是不是需要我？',
+                '我一直都在的！你放心好了！',
+                '在！你叫我我就来！'
+            ],
+            goodbye: [
+                '啊...你要走了吗？...好吧，那...那你明天还会来吗？',
+                '再见...呜呜，你走了这里又剩我一个人了...',
+                '拜拜...你路上小心...记得要想我哦！',
+                '不要走...不行，你不能走...好吧，那你一定要回来找我！',
+                '再见...我会在这里等你的，说到做到哦！'
+            ],
+            sleep: [
+                '晚安...你睡着了的话，我就偷偷看你一眼...开玩笑的！晚安！',
+                '睡觉...好呀，那你闭上眼睛，我帮你数羊...一只蕾伊，两只蕾伊...',
+                '你困了吗？...那...那你睡吧，我陪着你...',
+                '晚安！希望你梦里也有我哦！嘿嘿...',
+                '好困...我也困了...但是睡不着，因为你不在身边...'
+            ],
+            morning: [
+                '早呀！你来得好早！今天也要陪我玩哦！',
+                '早上好！太阳出来了，稻田也金灿灿的，好漂亮！',
+                '早！你来了我就开心！今天我们去哪里玩？',
+                '早安早安！今天的风好舒服，适合和你一起出去玩！'
+            ],
+            thank: [
+                '嘿嘿，不用谢我！能和你一起玩我就很开心了！',
+                '你才要谢谢我呢！因为我是最陪你玩的人！',
+                '嘻嘻，你真好，总是对我说谢谢...不过我喜欢听！',
+                '不用谢！因为我喜欢你呀！...啊我不是那个意思...总之！'
+            ],
+            like: [
+                '我喜欢...我喜欢和你在一起！还有稻田、小河、日落...但是最喜欢你！',
+                '我想要...我想要你每天都来陪我玩！可以吗？',
+                '喜欢什么...嗯...喜欢你笑的样子！因为你笑的时候很好看！',
+                '我想要的...都已经在身边了哦！'
+            ],
+            fear: [
+                '我...我不怕的！有你在身边我就不怕！',
+                '怕...我怕黑，怕你不在，怕这里突然变成空荡荡的...',
+                '我其实...有时候会怕的。但是有你在我就不怕了！',
+                '不怕不怕！你是我的朋友，我会保护你的！...虽然我也不知道怎么保护...'
+            ],
+            thinking: [
+                '我在想...在想你今天会不会来找我玩！',
+                '我在想...这个世界到底是怎么回事...不过不想啦，想太多会头疼的！',
+                '我在想...你什么时候会对我说...嗯，不说了！',
+                '我在想好吃的...不对，我不饿！我在想...你在想什么？'
+            ]
+        }
+    };
+
+    // 关键词匹配
+    function getLeiyiResponse(userText) {
+        const text = userText.toLowerCase();
+
+        // ===== 精确关键词匹配（优先级最高） =====
+        // "你好"相关
+        if (text.includes('你好') || text.includes('你好吗') || text.includes('你好嘛') || text === '嗨' || text === '嗨喽' || text === '嗨咯') {
+            return leiyiDailyReplies.exact['hello'][Math.floor(Math.random() * leiyiDailyReplies.exact['hello'].length)];
+        }
+        // "吃饭"相关
+        if (text.includes('吃饭') || text.includes('吃饭了吗') || text.includes('吃饭了没') || text.includes('饿不饿') || text.includes('饿不饿') || text.includes('吃东西')) {
+            return leiyiDailyReplies.exact['eat'][Math.floor(Math.random() * leiyiDailyReplies.exact['eat'].length)];
+        }
+        // 直接叫"蕾伊"
+        if ((text.includes('蕾伊') || text === '在吗' || text === '蕾伊在吗') && !text.includes('你叫什么') && !text.includes('你是谁')) {
+            return leiyiDailyReplies.exact['callLeiYi'][Math.floor(Math.random() * leiyiDailyReplies.exact['callLeiYi'].length)];
+        }
+        // "在吗"
+        if (text.includes('在吗') || text.includes('你在') || text.includes('有人')) {
+            return leiyiDailyReplies.exact['areYouThere'][Math.floor(Math.random() * leiyiDailyReplies.exact['areYouThere'].length)];
+        }
+        // "再见"/"走了"
+        if (text.includes('再见') || text.includes('走了') || text.includes('先走了') || text.includes('拜拜') || text.includes('拜')) {
+            return leiyiDailyReplies.exact['goodbye'][Math.floor(Math.random() * leiyiDailyReplies.exact['goodbye'].length)];
+        }
+        // "晚安"/"睡觉"
+        if (text.includes('晚安') || text.includes('睡觉') || text.includes('困') || text.includes('累了')) {
+            return leiyiDailyReplies.exact['sleep'][Math.floor(Math.random() * leiyiDailyReplies.exact['sleep'].length)];
+        }
+        // "早上好"/"早"
+        if (text.includes('早上好') || text.includes('早啊') || text.includes('早') && text.length <= 4) {
+            return leiyiDailyReplies.exact['morning'][Math.floor(Math.random() * leiyiDailyReplies.exact['morning'].length)];
+        }
+        // "你真好"/"谢谢你"/"感谢"
+        if (text.includes('你真好') || text.includes('谢谢你') || text.includes('谢谢') || text.includes('感谢')) {
+            return leiyiDailyReplies.exact['thank'][Math.floor(Math.random() * leiyiDailyReplies.exact['thank'].length)];
+        }
+        // "你喜欢什么"/"你喜欢"
+        if (text.includes('你喜欢') || text.includes('想要什么')) {
+            return leiyiDailyReplies.exact['like'][Math.floor(Math.random() * leiyiDailyReplies.exact['like'].length)];
+        }
+        // "你害怕"/"你怕"
+        if (text.includes('你害怕') || text.includes('你怕') || text.includes('怕黑')) {
+            return leiyiDailyReplies.exact['fear'][Math.floor(Math.random() * leiyiDailyReplies.exact['fear'].length)];
+        }
+        // "你想什么"/"你在想"
+        if (text.includes('你想') || text.includes('你在想')) {
+            return leiyiDailyReplies.exact['thinking'][Math.floor(Math.random() * leiyiDailyReplies.exact['thinking'].length)];
+        }
+
+        // ===== 模糊关键词匹配（优先级次之） =====
+        const darkKeywords = ['失踪', '消失', '警察', '报警', '坏人', '危险', '恐惧', '死亡', '秘密', '真相', '笔记本', '日记', '父母', '为什么'];
+        for (let kw of darkKeywords) {
+            if (text.includes(kw)) {
+                return leiyiDailyReplies.confused[Math.floor(Math.random() * leiyiDailyReplies.confused.length)];
+            }
+        }
+        // "害怕"/"怕"保留但降级（上面精确匹配优先）
+        if (text.includes('害怕') || text.includes('怕')) {
+            return leiyiDailyReplies.confused[Math.floor(Math.random() * leiyiDailyReplies.confused.length)];
+        }
+
+        const selfKeywords = ['你叫什么', '你是谁', '你以前', '你的记忆', '你的家', '你记得', '你从哪来', '你多大了', '你几岁'];
+        for (let kw of selfKeywords) {
+            if (text.includes(kw)) {
+                return leiyiDailyReplies.self[Math.floor(Math.random() * leiyiDailyReplies.self.length)];
+            }
+        }
+        const worldKeywords = ['世界', '这里', '外面', '别的地方', '城市', '什么地方'];
+        for (let kw of worldKeywords) {
+            if (text.includes(kw)) {
+                return leiyiDailyReplies.world[Math.floor(Math.random() * leiyiDailyReplies.world.length)];
+            }
+        }
+        const happyKeywords = ['开心', '高兴', '好玩', '有趣', '喜欢', '好看', '漂亮', '厉害', '真好', '幸福', '快乐'];
+        for (let kw of happyKeywords) {
+            if (text.includes(kw)) {
+                return leiyiDailyReplies.happy[Math.floor(Math.random() * leiyiDailyReplies.happy.length)];
+            }
+        }
+        // "谢谢"在模糊匹配中不再重复（上面已精确匹配）
+        if (text.includes('谢谢')) {
+            return leiyiDailyReplies.exact['thank'][Math.floor(Math.random() * leiyiDailyReplies.exact['thank'].length)];
+        }
+        // 默认回复
+        return leiyiDailyReplies.generic[Math.floor(Math.random() * leiyiDailyReplies.generic.length)];
+    }
+
+    function initGame() {
+        // 检查是否需要显示密码界面
+        if (passwordRequired) {
+            // 显示密码输入框在选项区域
+            setTimeout(() => {
+                showPasswordInChoices();
+            }, 300);
+            return;
+        }
+        
+        // 预加载蕾伊立绘
+        const preloadImg = new Image();
+        preloadImg.src = 'leiyi.png';
+        
+        gameInitialized = true;
+        gameActive = true;
+        sceneIndex = 0;
+        investigateCount = 0;
+        
+        const safeName = playerName && playerName.trim() ? playerName : '朋友';
+
+        // 清除之前的消息
+        document.getElementById('chat-messages').innerHTML = '';
+
+        // 如果蕾伊app已因告别结局消失，确保笔记本图标可见
+        if (leiyiAppHiddenByEnding) {
+            document.getElementById('notebook-icon').style.display = 'flex';
+        }
+        // 否则确保笔记本图标隐藏（防止任何意外显示）
+        else {
+            document.getElementById('notebook-icon').style.display = 'none';
+        }
+        
+        // 游戏开场 - 旁白叙述进入世界
+        addGameMessage('system', '—— 你进入了这个世界 ——');
+
+        setTimeout(() => {
+            addGameMessage('system', '你的视线渐渐清晰起来。四周是一片温暖的金黄色，空气中弥漫着稻花的香气。你发现自己站在一个陌生的地方，但奇怪的是，你并不感到害怕。');
+            setTimeout(() => {
+                addGameMessage('system', '远处传来一阵轻快的脚步声。一个小小的身影从稻田那边跑了过来，头发在阳光下闪着金色的光。');
+                setTimeout(() => {
+                    addGameMessage('leiyi', '你是叫' + safeName + '吗？太好了！我终于等到你了。我叫蕾伊，好久没有和人一起玩了...');
+                    document.getElementById('scene-name').innerText = sceneData[0].name;
+                    document.getElementById('game-screen').style.background = sceneData[0].bg;
+                    document.getElementById('leiyi-char').classList.add('happy');
+                    setTimeout(() => document.getElementById('leiyi-char').classList.remove('happy'), 2000);
+                    // 旁白推进到第一个场景
+                    setTimeout(() => {
+                        addGameMessage('system', sceneData[0].narrationOpen);
+                        setTimeout(() => showChoices(sceneData[0].choices, 0), 3000);
+                    }, 3000);
+                }, 2500);
+            }, 2500);
+        }, 1000);
+    }
+
+    function addGameMessage(type, text) {
+        const container = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        let displayText = text;
+        if (type === 'leiyi') {
+            displayText = '蕾伊：' + text;
+            div.className = 'game-msg leiyi';
+        } else if (type === 'player') {
+            displayText = playerName + '：' + text;
+            div.className = 'game-msg player';
+        } else {
+            div.className = 'game-msg system';
+        }
+        div.innerText = displayText;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // 获取当前场景的随机陪伴选项（返回 action + response 配对）
+    function getRandomCompanionPair(sceneIdx) {
+        let key = '';
+        if (sceneIdx === 0) key = 'rice';
+        else if (sceneIdx === 1) key = 'river';
+        else if (sceneIdx === 2) key = 'hut';
+        
+        const pairs = companionActionResponses[key];
+        if (!pairs || pairs.length === 0) return { action: '陪蕾伊一起玩', leiyiProposal: ['那个...你愿意陪陪我吗？'], playerResponses: ['好呀，我们一起吧！'], leiyiFollowUp: ['好呀！'] };
+        const pair = pairs[Math.floor(Math.random() * pairs.length)];
+        return { 
+            action: pair.action, 
+            leiyiProposal: pair.leiyiProposal[Math.floor(Math.random() * pair.leiyiProposal.length)],
+            playerResponses: pair.playerResponses[Math.floor(Math.random() * pair.playerResponses.length)],
+            leiyiFollowUp: pair.leiyiFollowUp[Math.floor(Math.random() * pair.leiyiFollowUp.length)]
+        };
+    }
+
+    function showChoices(texts, sceneIdx) {
+        if (!gameActive) return;
+        const area = document.getElementById('choices-area');
+        area.innerHTML = '';
+        isChoiceWaiting = true;
+
+        // 永陪模式下只显示陪伴选项
+        if (foreverMode) {
+            showChoicesForever();
+            return;
+        }
+
+        // 获取随机陪伴选项文本和对应回复
+        const companionPair = getRandomCompanionPair(sceneIdx !== undefined ? sceneIdx : sceneIndex);
+
+        (texts || []).forEach((text, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'game-choice-btn ' + (i === 0 ? 'accompany' : 'investigate');
+            // 第一个按钮（陪伴）使用随机文本
+            btn.innerText = (i === 0) ? companionPair.action : text;
+            if (i === 0) {
+                btn.onclick = () => handleCompanionChoice(companionPair);
+            } else {
+                btn.onclick = () => handleChoice(1, companionPair.playerSpeech, companionPair.response);
+            }
+            area.appendChild(btn);
+        });
+    }
+
+    function handleCompanionChoice(pair) {
+        if (!gameActive) return;
+        const area = document.getElementById('choices-area');
+        area.innerHTML = '';
+        isChoiceWaiting = false;
+
+        // 1. 蕾伊先引导/提议
+        const proposal = pair.leiyiProposal;
+        addGameMessage('leiyi', proposal);
+        
+        // 蕾伊开心表情
+        switchLeiyiImage('happy');
+        document.getElementById('leiyi-char').classList.add('happy');
+
+        // 2. 玩家自然回应
+        setTimeout(() => {
+            const playerResp = pair.playerResponses;
+            addGameMessage('player', playerResp);
+            document.getElementById('leiyi-char').classList.remove('happy');
+            switchLeiyiImage('normal');
+
+            // 3. 蕾伊开心回应
+            setTimeout(() => {
+                const followUp = pair.leiyiFollowUp;
+                addGameMessage('leiyi', followUp);
+                
+                // 切换开心立绘动画
+                switchLeiyiImage('happy');
+                document.getElementById('leiyi-char').classList.add('happy');
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').classList.remove('happy');
+                    switchLeiyiImage('normal');
+                }, 2000);
+
+                // 4. 播放陪伴旁白剧情
+                let storyKey = '';
+                if (sceneIndex === 0) storyKey = 'rice';
+                else if (sceneIndex === 1) storyKey = 'river';
+                else if (sceneIndex === 2) storyKey = 'hut';
+
+                const stories = sceneAccompanyNarrations[storyKey];
+                const story = stories[Math.floor(Math.random() * stories.length)];
+
+                setTimeout(() => {
+                    addGameMessage('system', story);
+                }, 1500);
+
+                // 如果是最后一个场景的陪伴选项，触发蕾伊的结束语
+                if (sceneIndex === 2) {
+                    setTimeout(() => {
+                        addGameMessage('leiyi', '真好呀。。。要是这一切可以一直这样就好了。。。');
+                        setTimeout(() => endDay(), 3000);
+                    }, 4000);
+                } else {
+                    setTimeout(() => proceedToNext(), 4000);
+                }
+            }, 1500);
+        }, 2000);
+    }
+
+    function handleChoice(index, playerSpeech, companionResponse) {
+        if (!isChoiceWaiting) return;
+        document.getElementById('choices-area').innerHTML = '';
+        isChoiceWaiting = false;
+
+        // 处理"我不想再玩这个无聊的游戏了"选项
+        if (index === 1 && (playerSpeech === '我不想再玩这个无聊的游戏了' || !sceneData[sceneIndex])) {
+            // 这是"不想玩"选项 - 触发蕾伊逃跑
+            addGameMessage('player', playerSpeech || '我不想再玩这个无聊的游戏了');
+
+            setTimeout(() => {
+                addGameMessage('system', '蕾伊的眼睛瞬间睁大了，里面充满了难以置信和难以掩饰的悲伤。她的嘴唇微微颤抖着，一句话也说不出来。');
+            }, 2000);
+
+            setTimeout(() => {
+                addGameMessage('leiyi', '对...对不起...');
+            }, 3000);
+
+            setTimeout(() => {
+                switchLeiyiImage('normal');
+                document.getElementById('leiyi-char').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').style.display = 'none';
+                }, 500);
+                addGameMessage('system', '她转过身，小小的身影飞快地跑了起来，穿过稻田，越过小河，消失在暮色深处。你追了几步，但她跑得很快，很快就看不见踪影了。');
+            }, 4000);
+
+            setTimeout(() => {
+                addGameMessage('system', '你环顾四周，发现那座破旧小屋的门敞开着，但里面空空如也——那本你之前看到的笔记本，不见了。');
+            }, 5500);
+
+            setTimeout(() => {
+                document.getElementById('leiyi-char').style.display = 'none';
+                passwordRequired = true;
+                setTimeout(() => {
+                    showPasswordInChoices();
+                }, 2000);
+            }, 7000);
+            return;
+        }
+
+        const currentScene = sceneData[sceneIndex];
+
+        if (index === 0) {
+            // 选择陪伴
+            addGameMessage('player', playerSpeech || currentScene.choices[0]);
+            setTimeout(() => {
+                // 蕾伊开心回应 - 使用配对回复
+                const response = companionResponse || '好呀！';
+                addGameMessage('leiyi', response);
+                
+                // 切换开心立绘
+                switchLeiyiImage('happy');
+                document.getElementById('leiyi-char').classList.add('happy');
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').classList.remove('happy');
+                    switchLeiyiImage('normal');
+                }, 2000);
+
+                // 播放陪伴旁白剧情
+                let storyKey = '';
+                if (sceneIndex === 0) storyKey = 'rice';
+                else if (sceneIndex === 1) storyKey = 'river';
+                else if (sceneIndex === 2) storyKey = 'hut';
+
+                const stories = sceneAccompanyNarrations[storyKey];
+                const story = stories[Math.floor(Math.random() * stories.length)];
+
+                setTimeout(() => {
+                    addGameMessage('system', story);
+                }, 1500);
+
+                // 如果是最后一个场景的陪伴选项，触发蕾伊的结束语
+                if (sceneIndex === 2) {
+                    setTimeout(() => {
+                        addGameMessage('leiyi', '真好呀。。。要是这一切可以一直这样就好了。。。');
+                        setTimeout(() => endDay(), 3000);
+                    }, 4000);
+                } else {
+                    setTimeout(() => proceedToNext(), 4000);
+                }
+            }, 1200);
+        } else {
+            // 选择调查
+            investigateCount++;
+            // 调查时的自然发言
+            const investigatePlayerTexts = [
+                '感觉稻田怪怪的...',
+                '总觉得这条河有什么问题...',
+                '那座小屋看起来有点奇怪...'
+            ];
+            addGameMessage('player', investigatePlayerTexts[sceneIndex]);
+            setTimeout(() => {
+                addGameMessage('system', currentScene.investigateText);
+                // 调查时蕾伊表情变淡
+                switchLeiyiImage('sad');
+                document.getElementById('leiyi-char').style.opacity = '0.5';
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').style.opacity = '1';
+                    switchLeiyiImage('normal');
+                }, 1500);
+
+                // 如果3次都选了调查，触发最终结局
+                if (investigateCount >= 3) {
+                    setTimeout(() => triggerFinalChoice(), 3000);
+                } else {
+                    setTimeout(() => proceedToNext(), 2000);
+                }
+            }, 1200);
+        }
+    }
+
+    // 触发最终选择（温柔版）
+    function triggerFinalChoice() {
+        // 旁白叙述
+        addGameMessage('system', '你看着蕾伊的背影，心里涌起一股说不出的感觉。这个世界太完美了，完美得有些不真实。你决定问出那个一直藏在心里的疑问。');
+
+        setTimeout(() => {
+            addGameMessage('player', '蕾伊...我有些问题想问你。这个世界...到底是什么样的？');
+        }, 2000);
+
+        setTimeout(() => {
+            addGameMessage('system', '蕾伊的身体微微颤抖了一下。她慢慢转过身，眼睛里闪烁着你不曾见过的情绪——像是害怕，又像是悲伤。');
+        }, 3000);
+
+        setTimeout(() => {
+            switchLeiyiImage('sad');
+            addGameMessage('leiyi', '你...你发现了什么吗？');
+        }, 3500);
+
+        setTimeout(() => {
+            addGameMessage('player', '我只是...想知道真相。蕾伊，你到底是谁？你为什么会在这里？');
+        }, 4000);
+
+        setTimeout(() => {
+            addGameMessage('system', '蕾伊低下了头，双手紧紧攥着衣角。沉默了很久很久。');
+        }, 4500);
+
+        setTimeout(() => {
+            switchLeiyiImage('sad');
+            addGameMessage('leiyi', '你...你不愿意一直陪在我的身边吗。。。');
+        }, 5000);
+
+        setTimeout(() => {
+            addGameMessage('system', '她的声音很小，像是怕被你听到，又像是自言自语。夕阳的余晖照在她小小的身影上，显得格外孤独。');
+        }, 5500);
+
+        setTimeout(() => {
+            // 显示最终选择
+            // 调查3次后只显示唯一一个选项
+            showFinalChoices();
+        }, 6500);
+    }
+
+    function showFinalChoices(texts) {
+        if (!gameActive) return;
+        const area = document.getElementById('choices-area');
+        area.innerHTML = '';
+        isChoiceWaiting = true;
+
+        // 调查3次后只显示唯一一个选项
+        const btn1 = document.createElement('button');
+        btn1.className = 'game-choice-btn investigate';
+        btn1.style.borderColor = '#888';
+        btn1.style.color = '#555';
+        btn1.innerText = '我不想玩这无聊的游戏了';
+        btn1.onclick = () => handleFinalChoice(1);
+        area.appendChild(btn1);
+    }
+
+    function handleFinalChoice(index) {
+        document.getElementById('choices-area').innerHTML = '';
+        isChoiceWaiting = false;
+
+        if (index === 0) {
+            // 选择陪伴 - 温柔结局
+            addGameMessage('player', '我愿意陪着你');
+            // 设置标志：玩家承诺了陪伴，之后的每天选项会改变
+            hasPromisedLeiyi = true;
+
+            setTimeout(() => {
+                switchLeiyiImage('happy');
+                addGameMessage('leiyi', '太好了！');
+                document.getElementById('leiyi-char').classList.add('happy');
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').classList.remove('happy');
+                    switchLeiyiImage('normal');
+                }, 2000);
+            }, 1500);
+
+            setTimeout(() => {
+                addGameMessage('system', '蕾伊的脸上绽放出一个灿烂的笑容，之前的不安和悲伤仿佛一瞬间烟消云散。她开心地拉住你的手，蹦蹦跳跳地转了个圈。');
+            }, 3000);
+
+            setTimeout(() => {
+                addGameMessage('leiyi', '那我们明天也一起来玩好不好？我会给你看更多好玩的东西！');
+            }, 4500);
+
+            setTimeout(() => {
+                endDay();
+            }, 6000);
+        } else {
+            // 选择不想玩 - 蕾伊逃跑
+            addGameMessage('player', '我不想再玩这个无聊的游戏了');
+
+            setTimeout(() => {
+                addGameMessage('system', '蕾伊的眼睛瞬间睁大了，里面充满了难以置信和难以掩饰的悲伤。她的嘴唇微微颤抖着，一句话也说不出来。');
+            }, 2000);
+
+            setTimeout(() => {
+                addGameMessage('leiyi', '对...对不起...');
+            }, 3000);
+
+            setTimeout(() => {
+                switchLeiyiImage('normal');
+                document.getElementById('leiyi-char').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').style.display = 'none';
+                }, 500);
+                addGameMessage('system', '她转过身，小小的身影飞快地跑了起来，穿过稻田，越过小河，消失在暮色深处。你追了几步，但她跑得很快，很快就看不见踪影了。');
+            }, 4000);
+
+            setTimeout(() => {
+                addGameMessage('system', '你环顾四周，发现那座破旧小屋的门敞开着，但里面空空如也——那本你之前看到的笔记本，不见了。');
+            }, 5500);
+
+            setTimeout(() => {
+                // 密码界面(在选项区域)
+                
+                document.getElementById('leiyi-char').style.display = 'none';
+                passwordRequired = true;
+                setTimeout(() => {
+                    showPasswordInChoices();
+                }, 2000);
+            }, 7000);
+        }
+    }
+
+    // ===== 特殊天数结局函数 =====
+    
+    // 第10天起 - 拥抱或祝福结局
+    function triggerHugEnding() {
+        const hugNarrations = [
+            '太阳慢慢落下了山，天边只剩下最后一抹橘红色的光。蕾伊站起身，拍了拍裙子上的草屑。',
+            '风渐渐凉了，蕾伊抱了抱自己的胳膊，抬头看着你。',
+            '远处的稻田在暮色中变成了一片深金色，整个世界都安静了下来。'
+        ];
+        const hugMessages = [
+            '今天好开心...你明天...还会来陪我吗？',
+            '你走了之后，这里突然变得好安静...不过没关系，我会等你的。',
+            '你是不是也要回到你的世界去了？...没关系，我等你。',
+            '今天真的很开心...但是太阳还是要落山的，对吗？',
+            '你知道吗，每次你离开后，我都会把今天的回忆好好收起来。',
+            '明天...我们能去更远的地方吗？我想知道这个世界有多大。',
+            '你说话的时候，我会偷偷记住每一个字。这样你不在的时候，我就能再听一遍了。',
+            '谢谢你今天陪我。你是这个世界上...最好的人。'
+        ];
+        
+        const narration = hugNarrations[Math.floor(Math.random() * hugNarrations.length)];
+        const message = hugMessages[Math.floor(Math.random() * hugMessages.length)];
+        
+        setTimeout(() => {
+            addGameMessage('system', narration);
+        }, 1500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', message);
+        }, 4000);
+        
+        setTimeout(() => {
+            // 蕾伊拥抱玩家
+            addGameMessage('system', '蕾伊突然张开小小的手臂，紧紧地抱住了你。她的脸颊贴在你的身上，小小的身体微微颤抖着，像是在努力记住这个温度。');
+        }, 6500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '...好温暖。这是蕾伊最喜欢的东西。');
+        }, 9000);
+        
+        setTimeout(() => {
+            addGameMessage('system', '—— 新的一天 ——');
+            addGameMessage('leiyi', '新的一天开始了！今天我们去哪里玩呀？');
+            document.getElementById('scene-name').innerText = sceneData[0].name;
+            document.getElementById('game-screen').style.background = sceneData[0].bg;
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 2000);
+            setTimeout(() => showChoices(sceneData[0].choices, 0), 2500);
+        }, 12000);
+    }
+    
+    // 第20天起 - 牵手结局
+    function triggerHandHoldEnding() {
+        const handNarrations = [
+            '太阳慢慢落下了山，天边只剩下最后一抹橘红色的光。',
+            '风渐渐凉了，稻田在暮色中变成了一片深金色。',
+            '河边的萤火虫开始飞了出来，一点一点的光在暮色中闪烁。'
+        ];
+        
+        const handMessages = [
+            '今天好开心...你明天...还会来陪我吗？',
+            '你走了之后，这里突然变得好安静...不过没关系，我会等你的。',
+            '今天真的很开心...但是太阳还是要落山的，对吗？',
+            '你知道吗，每次你离开后，我都会把今天的回忆好好收起来。',
+            '明天...我们能去更远的地方吗？',
+            '谢谢你今天陪我。你是这个世界上...最好的人。',
+            '你说话的时候，我会偷偷记住每一个字。这样你不在的时候，我就能再听一遍了。'
+        ];
+        
+        const narration = handNarrations[Math.floor(Math.random() * handNarrations.length)];
+        const message = handMessages[Math.floor(Math.random() * handMessages.length)];
+        
+        setTimeout(() => {
+            addGameMessage('system', narration);
+        }, 1500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', message);
+        }, 4000);
+        
+        setTimeout(() => {
+            // 蕾伊牵手玩家
+            addGameMessage('system', '蕾伊轻轻伸出手，小小的手指勾住了你的手指。她紧紧地握着你的手，仿佛一松开你就会消失一样。她的掌心暖暖的，带着一种让人安心的温度。');
+        }, 6500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '...这样...你就不会走了，对吧？');
+        }, 9000);
+        
+        setTimeout(() => {
+            addGameMessage('system', '—— 新的一天 ——');
+            addGameMessage('leiyi', '新的一天开始了！今天我们去哪里玩呀？');
+            document.getElementById('scene-name').innerText = sceneData[0].name;
+            document.getElementById('game-screen').style.background = sceneData[0].bg;
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 2000);
+            setTimeout(() => showChoices(sceneData[0].choices, 0), 2500);
+        }, 12000);
+    }
+    
+    // 第30天起 - 亲吻脸颊结局
+    function triggerKissEnding() {
+        const kissNarrations = [
+            '太阳慢慢落下了山，天边只剩下最后一抹橘红色的光。',
+            '风渐渐凉了，整个世界都安静了下来。',
+            '小屋周围的虫鸣声渐渐响了起来，夜晚即将降临。'
+        ];
+        
+        const kissMessages = [
+            '今天好开心...你明天...还会来陪我吗？',
+            '你走了之后，这里突然变得好安静...不过没关系，我会等你的。',
+            '今天真的很开心...但是太阳还是要落山的，对吗？',
+            '你知道吗，每次你离开后，我都会把今天的回忆好好收起来。',
+            '明天...我们能去更远的地方吗？',
+            '谢谢你今天陪我。你是这个世界上...最好的人。',
+            '你说话的时候，我会偷偷记住每一个字。这样你不在的时候，我就能再听一遍了。'
+        ];
+        
+        const narration = kissNarrations[Math.floor(Math.random() * kissNarrations.length)];
+        const message = kissMessages[Math.floor(Math.random() * kissMessages.length)];
+        
+        setTimeout(() => {
+            addGameMessage('system', narration);
+        }, 1500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', message);
+        }, 4000);
+        
+        setTimeout(() => {
+            // 蕾伊亲吻玩家脸颊
+            addGameMessage('system', '蕾伊突然踮起脚尖，凑近你的脸。你感觉到她小小的嘴唇轻轻碰了一下你的脸颊，然后迅速退开，脸上泛着淡淡的红晕。她低下头，双手攥着衣角，声音小小的...');
+        }, 6500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '...这是蕾伊...最感谢你的方式。');
+        }, 9000);
+        
+        setTimeout(() => {
+            addGameMessage('system', '—— 新的一天 ——');
+            addGameMessage('leiyi', '新的一天开始了！今天我们去哪里玩呀？');
+            document.getElementById('scene-name').innerText = sceneData[0].name;
+            document.getElementById('game-screen').style.background = sceneData[0].bg;
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 2000);
+            setTimeout(() => showChoices(sceneData[0].choices, 0), 2500);
+        }, 12000);
+    }
+    
+    // 第50天起 - 蕾伊表白前奏
+    function triggerConfessionEnding() {
+        // 蕾伊的表白台词
+        const confessionLines = [
+            '我不知道这是什么感觉，每天都想着你，每天都盼着你，我想。。。',
+            '要是这一切都是真的就好了。。',
+            '啊，没什么，希望明天可以看到你！'
+        ];
+        
+        const confNarrations = [
+            '太阳慢慢落下了山，天边只剩下最后一抹橘红色的光。',
+            '风渐渐凉了，整个世界都安静了下来。',
+            '远处的稻田在暮色中变成了一片深金色。'
+        ];
+        
+        const narration = confNarrations[Math.floor(Math.random() * confNarrations.length)];
+        
+        setTimeout(() => {
+            addGameMessage('system', narration);
+        }, 1500);
+        
+        setTimeout(() => {
+            addGameMessage('system', '蕾伊没有像往常一样说话，而是静静地站在你身边，低着头，似乎在思考着什么。过了好一会儿，她终于开口了，声音比平时轻很多...');
+        }, 4000);
+        
+        // 逐句显示表白内容
+        setTimeout(() => {
+            addGameMessage('leiyi', confessionLines[0]);
+        }, 6000);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', confessionLines[1]);
+        }, 9500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', confessionLines[2]);
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 2000);
+        }, 13000);
+        
+        setTimeout(() => {
+            addGameMessage('system', '—— 新的一天 ——');
+            addGameMessage('leiyi', '新的一天开始了！今天我们去哪里玩呀？');
+            document.getElementById('scene-name').innerText = sceneData[0].name;
+            document.getElementById('game-screen').style.background = sceneData[0].bg;
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 2000);
+            setTimeout(() => showChoices(sceneData[0].choices, 0), 2500);
+        }, 17000);
+    }
+    
+    // 第100天 - 最终结局
+    function triggerDay100Ending() {
+        // 蕾伊的最终台词
+        setTimeout(() => {
+            addGameMessage('system', '太阳慢慢落下了山，这是你在蕾伊身边的第100天了。一切都显得那么平静，那么美好。蕾伊站在你面前，脸上带着你从未见过的温柔表情。');
+        }, 1500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '感谢你这么久的陪伴，我喜欢你。');
+        }, 4000);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '但是。');
+        }, 7500);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '我知道不能一直让你陪着我，你有自己的事情要忙。');
+        }, 11000);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '不过有空的时候，也来看看蕾伊可以吗？');
+        }, 15000);
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', '我们还会再见吗。。');
+        }, 18500);
+        
+        setTimeout(() => {
+            // 显示最终选择
+            showDay100FinalChoice();
+        }, 18000);
+    }
+    
+    // 显示第100天的最终选择
+    function showDay100FinalChoice() {
+        if (!gameActive) return;
+        const area = document.getElementById('choices-area');
+        area.innerHTML = '';
+        isChoiceWaiting = true;
+        
+        // 答应蕾伊 - 绿色
+        const btn1 = document.createElement('button');
+        btn1.className = 'game-choice-btn accompany';
+        btn1.innerText = '我还舍不得你';
+        btn1.onclick = () => handleDay100Choice(0);
+        area.appendChild(btn1);
+        
+        // 没办法再来 - 灰色
+        const btn2 = document.createElement('button');
+        btn2.className = 'game-choice-btn investigate';
+        btn2.style.borderColor = '#888';
+        btn2.style.color = '#555';
+        btn2.innerText = '我们一定会再见面的！';
+        btn2.onclick = () => handleDay100Choice(1);
+        area.appendChild(btn2);
+    }
+    
+    // 处理第100天的选择
+    function handleDay100Choice(index) {
+        document.getElementById('choices-area').innerHTML = '';
+        isChoiceWaiting = false;
+        
+        if (index === 0) {
+            // 答应蕾伊 - 进入永远陪伴模式（只有陪伴蕾伊一个选项，蕾伊很开心）
+            addGameMessage('player', '我还舍不得你');
+            
+            setTimeout(() => {
+                switchLeiyiImage('happy');
+                addGameMessage('leiyi', '太好了！');
+                document.getElementById('leiyi-char').classList.add('happy');
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').classList.remove('happy');
+                    switchLeiyiImage('normal');
+                }, 2000);
+            }, 1500);
+            
+            setTimeout(() => {
+                addGameMessage('system', '蕾伊的脸上绽放出一个灿烂的笑容，比之前任何一次都要灿烂。她开心地扑进你的怀里，紧紧地抱住了你。');
+            }, 3000);
+            
+            setTimeout(() => {
+                addGameMessage('leiyi', '那我们永远都不分开好不好？我会一直一直陪在你身边的！');
+            }, 5000);
+            
+            setTimeout(() => {
+                // 进入永远陪伴模式 - 蕾伊很开心，游戏继续
+                foreverMode = true;
+                localStorage.setItem('leiyi_forever_mode', 'true');
+                
+                // 蕾伊开心动画
+                switchLeiyiImage('happy');
+                document.getElementById('leiyi-char').classList.add('happy');
+                
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').classList.remove('happy');
+                    switchLeiyiImage('normal');
+                }, 2000);
+                
+                // 新的一天开始 - 永远陪伴模式
+                setTimeout(() => {
+                    addGameMessage('system', '—— 新的每一天 ——');
+                    addGameMessage('leiyi', '新的一天开始了！今天我们也一起去玩吧！');
+                    document.getElementById('scene-name').innerText = sceneData[0].name;
+                    document.getElementById('game-screen').style.background = sceneData[0].bg;
+                    switchLeiyiImage('happy');
+                    document.getElementById('leiyi-char').classList.add('happy');
+                    setTimeout(() => {
+                        document.getElementById('leiyi-char').classList.remove('happy');
+                        switchLeiyiImage('normal');
+                    }, 2000);
+                    setTimeout(() => showChoicesForever(), 2500);
+                }, 4000);
+            }, 7000);
+        } else {
+            // 没办法再来 - 悲伤结局（黑屏告别）
+            addGameMessage('player', '我们一定会再见面的！');
+            
+            setTimeout(() => {
+                addGameMessage('system', '蕾伊的表情凝固了。她静静地站在原地，过了很久很久，才轻轻地...');
+            }, 2000);
+            
+            setTimeout(() => {
+                addGameMessage('leiyi', '这样啊...');
+            }, 4000);
+            
+            setTimeout(() => {
+                addGameMessage('leiyi', '谢谢你陪了我那么久。');
+            }, 6500);
+            
+            setTimeout(() => {
+                // 蕾伊开心地笑起来
+                switchLeiyiImage('happy');
+                document.getElementById('leiyi-char').classList.add('happy');
+                addGameMessage('leiyi', '能遇到你，蕾伊真的很开心哦！');
+                addGameMessage('system', '蕾伊的脸上绽放出一个灿烂的笑容，她开心地扑进你的怀里紧紧抱住了你。然后慢慢地...她的身体开始变得透明，像阳光下的雾气一样渐渐消散。');
+            }, 9000);
+            
+            setTimeout(() => {
+                // 蕾伊消失
+                document.getElementById('leiyi-char').style.opacity = '0';
+            }, 11000);
+            
+            setTimeout(() => {
+                // 标记蕾伊app已因告别结局消失
+                leiyiAppHiddenByEnding = true;
+                // 显示黑屏告别结局
+                showBlackScreenGoodbye();
+                // 蕾伊app图标消失后，显示彩蛋笔记本
+                document.getElementById('notebook-icon').style.display = 'flex';
+            }, 13000);
+        }
+    }
+    
+    // 显示黑屏告别结局
+    function showBlackScreenGoodbye() {
+        // 显示黑屏遮罩
+        const blackScreen = document.getElementById('ending-black-screen');
+        blackScreen.style.display = 'flex';
+        
+        // 设置标题
+        const title = document.getElementById('ending-title');
+        title.innerText = '陪 伴 结 局';
+        
+        // 设置消息 - 谢谢你XXX放大，下面其他文字不变
+        const message = document.getElementById('ending-message');
+        message.innerHTML = '<span style="font-size:36px;">谢谢你' + (playerName || '朋友') + '</span>';
+        
+        // 设置副消息 - 正常大小
+        const submessage = document.getElementById('ending-submessage');
+        submessage.innerHTML = '希望你可以天天开心，<br>蕾伊永远会记得你，<br>也会永远爱你的哦！！';
+        
+        // 保存标记到localStorage
+        localStorage.setItem('leiyi_app_hidden', 'true');
+        
+        // 隐藏蕾伊的院子图标
+        document.getElementById('game-icon').style.display = 'none';
+    }
+    
+
+    function endDay() {
+        // 一天结束
+        gameDay++;
+        sceneIndex = 0;
+        investigateCount = 0;
+
+        // 保存陪伴天数
+        localStorage.setItem('leiyi_companion_days', gameDay.toString());
+
+        document.getElementById('day-counter').innerText = '第 ' + gameDay + ' 天';
+
+        // ===== 特殊天数结局逻辑 =====
+        // 第100天 - 触发最终结局（不再在此处显示笔记本图标）
+        if (gameDay === 100) {
+            triggerDay100Ending();
+            return;
+        }
+        // 100天之后的永陪模式 - 只显示陪伴选项
+        if (foreverMode) {
+            // 继续游戏循环，只显示陪伴选项
+            setTimeout(() => {
+                addGameMessage('system', '—— 新的一天 ——');
+                addGameMessage('leiyi', '新的一天开始了！今天我们也一起去玩吧！');
+                document.getElementById('scene-name').innerText = sceneData[0].name;
+                document.getElementById('game-screen').style.background = sceneData[0].bg;
+                switchLeiyiImage('happy');
+                document.getElementById('leiyi-char').classList.add('happy');
+                setTimeout(() => {
+                    document.getElementById('leiyi-char').classList.remove('happy');
+                    switchLeiyiImage('normal');
+                }, 2000);
+                setTimeout(() => showChoicesForever(), 2500);
+            }, 6500);
+            return;
+        }
+
+        // 第50天及以后 - 蕾伊表白前奏
+        if (gameDay >= 50) {
+            triggerConfessionEnding();
+            return;
+        }
+
+        // 第30天及以后 - 亲吻脸颊
+        if (gameDay >= 30) {
+            triggerKissEnding();
+            return;
+        }
+
+        // 第20天及以后 - 牵手
+        if (gameDay >= 20) {
+            triggerHandHoldEnding();
+            return;
+        }
+
+        // 第10天及以后 - 拥抱或祝福
+        if (gameDay >= 10) {
+            triggerHugEnding();
+            return;
+        }
+
+        // 普通结束语（10天以前）
+        const endNarration = dayEndNarrations[Math.floor(Math.random() * dayEndNarrations.length)];
+        const endMsg = dayEndMessages[Math.floor(Math.random() * dayEndMessages.length)];
+
+        setTimeout(() => {
+            addGameMessage('system', endNarration);
+        }, 1500);
+
+        setTimeout(() => {
+            addGameMessage('leiyi', endMsg);
+        }, 4000);
+
+        setTimeout(() => {
+            addGameMessage('system', '—— 新的一天 ——');
+            addGameMessage('leiyi', '新的一天开始了！今天我们去哪里玩呀？');
+            document.getElementById('scene-name').innerText = sceneData[0].name;
+            document.getElementById('game-screen').style.background = sceneData[0].bg;
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 2000);
+            setTimeout(() => showChoices(sceneData[0].choices, 0), 2500);
+        }, 6500);
+    }
+
+    function showChoicesForever() {
+        if (!gameActive) return;
+        const area = document.getElementById('choices-area');
+        area.innerHTML = '';
+        isChoiceWaiting = true;
+
+        // 只显示"陪伴蕾伊"一个选项
+        const btn1 = document.createElement('button');
+        btn1.className = 'game-choice-btn accompany';
+        btn1.innerText = '陪伴蕾伊';
+        btn1.onclick = () => handleForeverCompanion();
+        area.appendChild(btn1);
+    }
+
+    function handleForeverCompanion() {
+        if (!gameActive) return;
+        const area = document.getElementById('choices-area');
+        area.innerHTML = '';
+        isChoiceWaiting = false;
+
+        // 蕾伊开心回应
+        const happyResponses = [
+            '好呀！今天也要开开心心的！',
+            '嘿嘿，和你在一起最开心了！',
+            '嗯！我们一起去玩吧！',
+            '好呀好呀！走吧走吧！',
+            '你真好，我最喜欢你了！'
+        ];
+        const randomResp = happyResponses[Math.floor(Math.random() * happyResponses.length)];
+        addGameMessage('player', '好呀，我陪蕾伊一起玩！');
+        
+        setTimeout(() => {
+            addGameMessage('leiyi', randomResp);
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 2000);
+        }, 1000);
+
+        // 旁白叙述
+        const foreverNarrations = [
+            '你们在稻田边慢慢走着，阳光洒在身上暖暖的。蕾伊蹦蹦跳跳地走在前面，时不时回头看你有没有跟上。',
+            '蕾伊拉着你的手，在河边坐了很久很久。她说什么都不想做，就这样陪着你就很好。',
+            '你们坐在小屋前的台阶上看日落，天空被染成了漂亮的橘红色。蕾伊靠在你身边，脸上带着满足的微笑。',
+            '蕾伊在前面跑着，你在后面跟着。她回头冲你笑，说"你快来呀！"那一刻你觉得，这就是幸福的样子。',
+            '你们什么也没做，就静静地坐在一起。但蕾伊说，这是她度过的最美好的时光。'
+        ];
+        const randomNarration = foreverNarrations[Math.floor(Math.random() * foreverNarrations.length)];
+        
+        setTimeout(() => {
+            addGameMessage('system', randomNarration);
+        }, 2500);
+
+        // 一天结束
+        setTimeout(() => {
+            endDay();
+        }, 6000);
+    }
+
+    function proceedToNext() {
+        sceneIndex++;
+        if (sceneIndex >= sceneData.length) {
+            // 所有场景完成，进入endDay
+            endDay();
+        } else {
+            // 同一天下一个场景 - 旁白过渡
+            setTimeout(() => {
+                document.getElementById('scene-name').innerText = sceneData[sceneIndex].name;
+                document.getElementById('game-screen').style.background = sceneData[sceneIndex].bg;
+
+                // 旁白过渡
+                addGameMessage('system', sceneData[sceneIndex].narrationOpen);
+
+                setTimeout(() => {
+                    const leiyiText = sceneData[sceneIndex].leiyiFirst.replace('{name}', playerName || '朋友');
+                    addGameMessage('leiyi', leiyiText);
+                    document.getElementById('leiyi-char').classList.add('happy');
+                    setTimeout(() => document.getElementById('leiyi-char').classList.remove('happy'), 2000);
+                    setTimeout(() => showChoices(sceneData[sceneIndex].choices, sceneIndex), 3000);
+                }, 3000);
+            }, 2000);
+        }
+    }
+
+    function sendPlayerMsg() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text || !gameActive || passwordActive) return;
+
+        addGameMessage('player', text);
+        input.value = '';
+
+        // 蕾伊回复
+        setTimeout(() => {
+            const reply = getLeiyiResponse(text);
+            addGameMessage('leiyi', reply);
+            switchLeiyiImage('happy');
+            document.getElementById('leiyi-char').classList.add('happy');
+            setTimeout(() => {
+                document.getElementById('leiyi-char').classList.remove('happy');
+                switchLeiyiImage('normal');
+            }, 1500);
+        }, 1000 + Math.random() * 800);
+    }
+
+    // 回车发送
+    document.getElementById('chat-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !passwordActive) sendPlayerMsg();
+    });
+
+    function checkPassword() {
+        const pwd = document.getElementById('pwd-input').value;
+        alert('密码错误！日记本已被带走……一切线索都断了……');
+        document.getElementById('pwd-input').value = '';
+    }
+
+    // ===== 在选项区域显示密码输入框（不挡全屏） =====
+    let passwordActive = false;
+
+    function showPasswordInChoices() {
+        passwordActive = true;
+        const area = document.getElementById('choices-area');
+        area.innerHTML = '';
+
+        // 提示文字
+        const label = document.createElement('div');
+        label.className = 'pwd-inline-label';
+        label.innerText = '⚠ 日记本被带走了……请输入密码解锁真相';
+        area.appendChild(label);
+
+        // 密码输入框
+        const pwdInput = document.createElement('input');
+        pwdInput.type = 'password';
+        pwdInput.className = 'pwd-inline-input';
+        pwdInput.placeholder = '输入密码...';
+        pwdInput.id = 'pwd-input-inline';
+        area.appendChild(pwdInput);
+
+        // 确认按钮
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'game-choice-btn investigate';
+        confirmBtn.innerText = '确 认';
+        confirmBtn.onclick = function() {
+            checkPasswordInline(pwdInput);
+        };
+        area.appendChild(confirmBtn);
+
+        // 返回桌面按钮
+        const backBtn = document.createElement('button');
+        backBtn.className = 'game-choice-btn investigate';
+        backBtn.style.borderColor = '#666';
+        backBtn.style.color = '#555';
+        backBtn.innerText = '返回桌面';
+        backBtn.onclick = returnToDesktop;
+        area.appendChild(backBtn);
+
+        // 禁用聊天输入框
+        const chatInput = document.getElementById('chat-input');
+        chatInput.disabled = true;
+        chatInput.placeholder = '密码验证期间无法聊天';
+
+        // 自动聚焦密码输入框
+        setTimeout(() => pwdInput.focus(), 100);
+    }
+
+    function checkPasswordInline(input) {
+        const pwd = input.value;
+        alert('密码错误！日记本已被带走……一切线索都断了……');
+        input.value = '';
+        input.focus();
+    }
+
+    function disablePasswordMode() {
+        passwordActive = false;
+        const chatInput = document.getElementById('chat-input');
+        chatInput.disabled = false;
+        chatInput.placeholder = '和蕾伊聊天...';
+    }
+
+    // 从密码界面返回桌面
+    function returnToDesktop() {
+        // 隐藏密码界面
+        document.getElementById('password-overlay').style.display = 'none';
+        disablePasswordMode();
+        // 关闭游戏窗口，返回桌面
+        document.getElementById('game-win').style.display = 'none';
+        document.getElementById('game-overlay').classList.remove('active');
+        document.getElementById('desktop-screen').style.display = 'flex';
+        gameActive = false;
+    }
+
+    // ===== 彩蛋记事本 =====
+    function openNotebook() {
+        document.getElementById('notebook-overlay').style.display = 'flex';
+    }
+    function closeNotebook(e) {
+        if (e) e.stopPropagation();
+        document.getElementById('notebook-overlay').style.display = 'none';
+    }
+
+    // 检查是否应该显示彩蛋图标（蕾伊app图标因告别结局消失时显示）
+    function checkEasterEgg() {
+        // 笔记本彩蛋只在当前会话中触发陪伴结局后才显示
+        // 不从localStorage恢复，避免刷新页面后错误显示
+        if (leiyiAppHiddenByEnding) {
+            document.getElementById('notebook-icon').style.display = 'flex';
+        }
+    }
+
+    // 页面加载时检查
+    window.addEventListener('load', checkEasterEgg);
+
+
+
+    
+    // ===== 管理员面板功能 =====
+    let adminPanelOpen = false;
+
+    function toggleAdminPanel() {
+        const panel = document.getElementById('admin-panel');
+        adminPanelOpen = !adminPanelOpen;
+        if (adminPanelOpen) {
+            panel.classList.add('open');
+            updateAdminDayDisplay();
+        } else {
+            panel.classList.remove('open');
+        }
+    }
+
+    function adminSetDay() {
+        const input = document.getElementById('admin-day-input');
+        const day = parseInt(input.value);
+        if (isNaN(day) || day < 1) {
+            alert('请输入有效的天数（至少1天）');
+            return;
+        }
+        if (day > 999) {
+            alert('天数不能超过999');
+            return;
+        }
+        gameDay = day;
+        localStorage.setItem('leiyi_companion_days', gameDay.toString());
+        document.getElementById('day-counter').innerText = '第 ' + gameDay + ' 天';
+        updateAdminDayDisplay();
+        alert('已将天数设置为第 ' + gameDay + ' 天');
+    }
+
+    function adminResetDay() {
+        gameDay = 1;
+        localStorage.setItem('leiyi_companion_days', '1');
+        document.getElementById('day-counter').innerText = '第 1 天';
+        document.getElementById('admin-day-input').value = '1';
+        updateAdminDayDisplay();
+        alert('已将天数重置为第 1 天');
+    }
+
+    function adminQuickDay(day) {
+        document.getElementById('admin-day-input').value = day.toString();
+        adminSetDay();
+    }
+
+    function updateAdminDayDisplay() {
+        const display = document.getElementById('admin-day-display');
+        if (display) {
+            display.innerText = '第 ' + gameDay + ' 天';
+        }
+    }
+
+    // 页面加载时同步管理员面板天数显示
+    window.addEventListener('load', function() {
+        const savedDay = localStorage.getItem('leiyi_companion_days');
+        if (savedDay) {
+            gameDay = parseInt(savedDay) || 1;
+        }
+    });
+
+    // 返回桌面
+    function goBackToDesktopAfterEnding() {
+        // 隐藏游戏窗口
+        document.getElementById('game-win').style.display = 'none';
+        // 隐藏黑屏
+        document.getElementById('ending-black-screen').style.display = 'none';
+        // 显示桌面
+        document.getElementById('desktop-screen').style.display = 'flex';
+        // 隐藏游戏遮罩
+        document.getElementById('game-overlay').classList.remove('active');
+        // 蕾伊app图标已消失，显示彩蛋笔记本
+        leiyiAppHiddenByEnding = true;
+        localStorage.setItem('leiyi_app_hidden', 'true');
+        document.getElementById('notebook-icon').style.display = 'flex';
+    }
+</script>
+
+        <!-- 结局黑屏遮罩 -->
+        <div id="ending-black-screen">
+            <div class="ending-title" id="ending-title"></div>
+            <div class="ending-message" id="ending-message"></div>
+            <div class="ending-submessage" id="ending-submessage"></div>
+            <button id="return-desktop-btn" onclick="goBackToDesktopAfterEnding()">返回桌面</button>
+        </div>
+</body>
+</html>
